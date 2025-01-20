@@ -1,16 +1,6 @@
 # Official R base image
 FROM rocker/rstudio:latest
 
-# Install system dependencies for R packages
-RUN apt-get update && apt-get install -y \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libxml2-dev \
-    libgdal-dev \
-    libudunits2-dev \
-    libfontconfig1-dev \
-    && rm -rf /var/lib/apt/lists/*
-	
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
@@ -20,10 +10,13 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libtiff5-dev \
     libjpeg-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y \
-    libglu1-mesa-dev \
+	libglpk40 \
+	libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libgdal-dev \
+    libudunits2-dev \
+	libglu1-mesa-dev \
     libx11-dev \
     libxt-dev \
     && rm -rf /var/lib/apt/lists/*
