@@ -1,12 +1,29 @@
 
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-path_user_files_all=""
+path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
 
 
 library(plumber)
 library(future)
 library(promises)
+library(igraph)
+library(ggplot2);library(plotly);library(ggthemes)
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(apcluster)
+library(uwot)
+library(text2vec)
+library(cluster)
+library(mclust) 
+library(factoextra)
+#library(ggrepel)
+library(ggforce)
+library(binda)
+library(FactoMineR)
+
+
 
 plan(multisession)  # Enable multi-threading
 
@@ -32,8 +49,7 @@ api_ex_now_one<-function(url,body=list()){
   #)
   
   # Load the libraries
-  library(httr)
-  library(jsonlite)
+
   
   
   # Make the POST request
@@ -77,8 +93,7 @@ api_ex_now<-function(url,body=list(),per_page=300){
   page=1
 
   # Load the libraries
-  library(httr)
-  library(jsonlite)
+
   
   
   url_now=paste0(url,"?page=",page)
@@ -145,7 +160,6 @@ api_ex_now<-function(url,body=list(),per_page=300){
 
 
 
-library(dplyr)
 
 # Flatten and normalize the list for consistent rows in skills
 flatten_list_skills <- function(item) {
@@ -266,7 +280,7 @@ double_to_occur<-function(data){
   gc()
   
   for (i in 1:nrow(data)){
-    print(i)
+    #print(i)
     
     binary_matrix[as.integer(data[i,1]),as.integer(data[i,2])]=1
     
@@ -319,7 +333,7 @@ double_to_occur_with_propagate<-function(data,table_now){
   
   for(i in 1:nrow(data)){
     
-    print(i)
+    #print(i)
     
     item_pos=data[i,1]
     skill_pos=data[i,2]
@@ -543,13 +557,13 @@ double_to_occur_with_propagation_skills_example <-function(){
       
       word_vectors=word_vectors_method(data_now,umap_nn = umap_nn,umap_dim = umap_dim,vectors_type = vectors_type)
       clust_output=gmm_clust_plot(word_vectors = word_vectors,no_clust = no_clust_now,diag_values = diag(data_now))
-      print(table(clust_output[[2]][["Cluster"]]))
+      #print(table(clust_output[[2]][["Cluster"]]))
       
     }else if (type_now=="kmeans"){
       
       word_vectors=dimensionality_reduction_method(data_now,umap_nn = umap_nn,umap_dim = umap_dim,vectors_type = vectors_type)
       clust_output=kmeans_clust_plot(word_vectors = word_vectors,no_clust = no_clust_now,diag_values = diag(data_now))
-      print(table(clust_output[[2]][["Cluster"]]))
+      #print(table(clust_output[[2]][["Cluster"]]))
       
     }else if (type_now=="affinity"){
       
@@ -789,8 +803,7 @@ co_occurence_weight<-function(data,weight="ii_weight",no_documents=0){
 
 ####Clustering algorithms
 leiden_clust_plot <- function(skill_co_mat){
-  library(igraph)
-  library(ggplot2);library(plotly);library(ggthemes)
+
   
   no_edges=rowSums(skill_co_mat)
   zero_edges=which(no_edges==0)
@@ -887,10 +900,7 @@ leiden_clust_plot <- function(skill_co_mat){
 
 
 affinity_clust_plot <-function(all_pairs_similarity,diag_values){
-  
-  library(apcluster)
-  library(ggplot2);library(plotly);library(ggthemes)
-  library(igraph)
+
   
   
   
@@ -970,8 +980,7 @@ affinity_clust_plot <-function(all_pairs_similarity,diag_values){
 word_vectors_method<-function(input_mat,umap_nn=5,umap_dim=2,vectors_type="GloVe"){
   
   
-  library(uwot)
-  library(text2vec)
+
   
   set.seed(123)
   
@@ -1015,9 +1024,6 @@ word_vectors_method<-function(input_mat,umap_nn=5,umap_dim=2,vectors_type="GloVe
 
 
 kmeans_clust_plot <-function(word_vectors,no_clust=10,diag_values,labeled_legend=F){
-  
-  library(ggplot2);library(plotly);library(ggthemes)
-  library(cluster)
   
 
   
@@ -1085,13 +1091,9 @@ kmeans_clust_plot <-function(word_vectors,no_clust=10,diag_values,labeled_legend
 
 gmm_clust_plot <-function(word_vectors,no_clust=10,diag_values,labeled_legend=F){
   
-  library(ggplot2);  library(plotly);library(ggthemes)
 
 
-  library(mclust) 
-  library(factoextra)
-  #library(ggrepel)
-  library(ggforce)
+
   
   set.seed(831)
   
@@ -1684,7 +1686,6 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     
   }else if (type_now=='leiden'){
     
-    library(binda)
     data_now=dichotomize(data_now,thresh = threshold)
     clust_output=leiden_clust_plot(data_now)
     
@@ -1693,7 +1694,6 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     #rownames(data_now)=unlist(data_all_skills$label[match(rownames(data_now),data_all_skills$id)])
     #colnames(data_now)=rownames(data_now)
     
-    library(FactoMineR)
     res.ca=CA(data_now, ncp = no_clust_now, graph = F)
     
     
@@ -1779,7 +1779,6 @@ multi_corresp_fun<-function(user_id="1",session_id="1",no_components=5,features_
   )
   
   
-  library(FactoMineR)
   
   
   no_components=as.numeric(no_components)
