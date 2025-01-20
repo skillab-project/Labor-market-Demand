@@ -1345,7 +1345,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query=""){
       
     }else{
       
-      data_now_list[[f]]=unlist(lapply(data_now$items,function(x){
+      data_now_list[[f]]=unlist(lapply(data$items,function(x){
         
         if(length(x[[f]])!=0){
           data_now_list[[f]][length(data_now_list[[f]])+1]=x[[f]]
