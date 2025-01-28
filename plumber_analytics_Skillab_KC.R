@@ -1,7 +1,6 @@
 
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-#path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
 path_user_files_all="~/"
 
 
@@ -1261,7 +1260,7 @@ function(url="",body="",user_id="",session_id=""){
 #* Retrieve information and outputs from a session 
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
-#* @param attribute The attribute to return. Current options: data - Returns all data, all_stats - Returns output from Descriptive statistics,  all_stats_prop - Returns output from Descriptive statistics with propagation, explor_stats - Returns output from Exploratory Analytics, skill_clust - Returns output from  Cluster analysis, multiple_cor - Returns output from Multiple Correspondence analysis
+#* @param attribute The attribute to return. Current options: data - Returns all data, all_stats - Returns output from Descriptive statistics,  all_stats_prop - Returns output from Descriptive statistics with propagation, explor_stats - Returns output from Exploratory Analytics, trend_anal - Returns output from Trend Analysis, skill_clust - Returns output from  Cluster analysis, multiple_cor - Returns output from Multiple Correspondence analysis
 #* @get /get_data
 function(user_id,session_id,attribute){
   future({
@@ -1617,7 +1616,108 @@ function(user_id="1",session_id="1",features_query=""){
 
 
 
+trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",features_query="",date_format="%Y-%m-%d",what="year"){
+  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
+  features_query_split=unlist(strsplit(features_query,","))
+  
+  if(what=="year"){
+    digits_to_see_start=1
+    digits_to_see_end=4
+  }else if (what=="month"){
+    digits_to_see_start=5
+    digits_to_see_end=7
+  }else if (what=="year_month"){
+    digits_to_see_start=1
+    digits_to_see_end=7
+  }
+  
+  dates_now=lapply(data$items,function(x){
+    temp_now=unlist(strsplit(x[[date_field]]," "))[[1]]
+    temp_now=as.Date(x = temp_now,format=date_format)
+    temp_now=substr(temp_now,start=digits_to_see_start,stop = digits_to_see_end)
+    return(temp_now)
+  })
+    
+  dates_now=unlist(as.matrix(dates_now,ncol=1))
+  #rownames(dates_now)=NULL
+  
+  data_now=list()
+  for (f in features_query_split){
+    
+    if(f %in% c("skills","occupations")){
+      
+      data_now[[f]] <- do.call(
+        rbind,
+        lapply(c(1:length(dates_now)), function(i) {
+          
+          if (length(data$items[[i]][[f]]) > 0) {
+              do.call(
+                rbind,
+                lapply(c(1:length(data$items[[i]][[f]])), function(j) {
+                  
+                  return(data.frame(date = dates_now[i], item = data$items[[i]][[f]][[j]], stringsAsFactors = FALSE))
+                  
+                })
+              )
+              
+            
+          }
+        })
+      )
+      
+      data_now[[f]]=as.data.frame(table(data_now[[f]]))
+      data_now[[f]]=data_now[[f]][-which(data_now[[f]]$Freq==0),]
+      
+    }else{
+      
+      data_now[[f]] <- do.call(
+        rbind,
+        lapply(c(1:length(dates_now)), function(i) {
+          
+          return(data.frame(date = dates_now[i], item = data$items[[i]][[f]], stringsAsFactors = FALSE))
+          
+        })
+      )
+      
+      data_now[[f]]=as.data.frame(table(data_now[[f]]))
+      data_now[[f]]=data_now[[f]][-which(data_now[[f]]$Freq==0),]
+      
+    }
+    
+  }
+  
+  return(data_now)
+}
 
+
+#* Trend analysis
+#* @param user_id The id of the user
+#* @param session_id The id session of the user's current session
+#* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills, occupations, location,type)
+#* @param date_format The date format of the stored data. Example (2025-01-02): "%Y-%m-%d"
+#* @param what What to investigate regarding dates-trends. Possible values: 'year' , 'month' , 'year_month'.
+#* @get /trend_analysis
+function(user_id="1",session_id="1",date_field="upload_date",features_query="location,type",date_format="%Y-%m-%d",what="year"){
+  print("Trend Analysis")
+  
+  
+  future({
+    
+    data_now=trend_anal_fun(user_id=user_id,session_id=session_id,date_field=date_field,features_query=features_query,date_format=date_format,what=what)  # Simulate the API call
+    save_update_user_session_file(user_id = user_id,session_id = session_id,'trend_anal',data_now)
+    return(data_now)
+    
+  }) %...>% {  # On success
+    
+    data_now <- . 
+    
+    
+    return(data_now)
+    
+  } %...!% (function(error) {  # On error (Parentheses added here)
+    paste("Error loading data:", error$message)
+  })
+}
 
 
 skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weigthing'){
