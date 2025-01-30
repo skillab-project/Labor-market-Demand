@@ -26,7 +26,6 @@ library(binda)
 library(FactoMineR)
 
 
-
 plan(multisession)  # Enable multi-threading
 
 ###### plumber.R
@@ -709,7 +708,7 @@ return_double_to_occur_propagate<-function(data,what,pillar,level,is_mat=T){
   data_now <- do.call(
     rbind,
     lapply(data$items, function(x) {
-      if (length(x[[what]]) > 0) {
+      if (length(x[[what]]) > 0 & !is.null(x[[what]])) {
         do.call(
           rbind,
           lapply(x[[what]], function(y) {
@@ -1294,7 +1293,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query=""){
       
       data_now_list[[f]]= unlist(
         lapply(data$items, function(x) {
-          if (length(x[[f]]) > 0) {
+          if (length(x[[f]]) > 0 & !is.null(x[[f]])) {
             
             unlist(lapply(x[[f]], function(y) {
               y
@@ -1348,7 +1347,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query=""){
       
       data_now_list[[f]]=unlist(lapply(data$items,function(x){
         
-        if(length(x[[f]])!=0){
+        if(length(x[[f]])!=0 & !is.null(x[[f]])){
           data_now_list[[f]][length(data_now_list[[f]])+1]=x[[f]]
           
         }else{
@@ -1373,7 +1372,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query=""){
 #* Descriptive statistics
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
-#* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills, occupations, location,type)
+#* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills,occupations,location,type)
 #* @get /analytics_descriptive
 function(user_id,session_id,features_query=""){
  
@@ -1477,9 +1476,9 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
     data_now <- do.call(
       rbind,
       lapply(data$items, function(x) {
-        
-        if (length(x[[features_query_split[[1]]]]) > 0) {
-          if(length(x[[features_query_split[[2]]]]) > 0) {
+
+        if (length(x[[features_query_split[[1]]]]) > 0& !is.null(x[[features_query_split[[1]]]])) {
+          if (length(x[[features_query_split[[2]]]]) > 0& !is.null(x[[features_query_split[[2]]]])) {
             
             do.call(
               rbind,
@@ -1492,31 +1491,6 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
                     
                   })
                 )
-              })
-            )
-            
-          }
-        }
-      })
-    )
-    
-  }else if (features_query_split[1] %in% c("skills","occupations") ){
-    
-    data_now <- do.call(
-      rbind,
-      lapply(data$items, function(x) {
-        
-        if (length(x[[features_query_split[[1]]]]) > 0) {
-          if(length(x[[features_query_split[[2]]]]) > 0) {
-            
-            do.call(
-              rbind,
-              lapply(x[[features_query_split[1]]], function(y) {
-                
-                return(data.frame(item_1 = y, item_2 = x[[features_query_split[2]]], stringsAsFactors = FALSE))
-                
-                
-                
               })
             )
             
@@ -1538,9 +1512,9 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
     data_now <- do.call(
       rbind,
       lapply(data$items, function(x) {
-        
-        if (length(x[[l_1]]) > 0) {
-          if(length(x[[l_2]]) > 0) {
+        if (length(x[[l_1]]) > 0& !is.null(x[[l_1]])) {
+          
+          if (length(x[[l_2]]) > 0& !is.null(x[[l_2]])) {
             
             do.call(
               rbind,
@@ -1563,10 +1537,10 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
     data_now <- do.call(
       rbind,
       lapply(data$items, function(x) {
-        
-        if (length(x[[features_query_split[[1]]]]) > 0) {
-          if(length(x[[features_query_split[[2]]]]) > 0) {
-            
+
+          if (length(x[[features_query_split[[1]]]]) > 0& !is.null(x[[features_query_split[[1]]]])) {
+            if (length(x[[features_query_split[[2]]]]) > 0& !is.null(x[[features_query_split[[2]]]])) {
+              
             return(data.frame(item_1 = x[[features_query_split[[1]]]], item_2 = x[[features_query_split[2]]], stringsAsFactors = FALSE))
             
           }
@@ -1580,8 +1554,12 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
   
   
   data_now=as.data.frame(table(data_now[,1],data_now[,2]))
-  data_now=data_now[-which(data_now$Freq ==0 ),]
+  
+  which_0=which(data_now$Freq ==0 )
+  if(length(which_0)>0)  data_now=data_now[-which_0,]
   data_now=data_now[order(data_now$Freq,decreasing = T),]
+  
+  
   return(data_now)
   
 }
@@ -1617,6 +1595,7 @@ function(user_id="1",session_id="1",features_query=""){
 
 
 trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",features_query="",date_format="%Y-%m-%d",what="year"){
+  
   data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   features_query_split=unlist(strsplit(features_query,","))
   
@@ -1641,7 +1620,10 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
   dates_now=unlist(as.matrix(dates_now,ncol=1))
   #rownames(dates_now)=NULL
   
+  gc()
+  
   data_now=list()
+
   for (f in features_query_split){
     
     if(f %in% c("skills","occupations")){
@@ -1650,7 +1632,7 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
         rbind,
         lapply(c(1:length(dates_now)), function(i) {
           
-          if (length(data$items[[i]][[f]]) > 0) {
+          if (length(data$items[[i]][[f]]) > 0 & !is.null(data$items[[i]][[f]]) & !is.null(dates_now[i])) {
               do.call(
                 rbind,
                 lapply(c(1:length(data$items[[i]][[f]])), function(j) {
@@ -1665,24 +1647,29 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
         })
       )
       
-      data_now[[f]]=as.data.frame(table(data_now[[f]]))
-      data_now[[f]]=data_now[[f]][-which(data_now[[f]]$Freq==0),]
-      
+  
     }else{
       
       data_now[[f]] <- do.call(
         rbind,
         lapply(c(1:length(dates_now)), function(i) {
-          
-          return(data.frame(date = dates_now[i], item = data$items[[i]][[f]], stringsAsFactors = FALSE))
+
+          if (length(data$items[[i]][[f]]) > 0 & !is.null(data$items[[i]][[f]]) & !is.null(dates_now[i])) {
+            return(data.frame(date = dates_now[i], item = data$items[[i]][[f]], stringsAsFactors = FALSE))
+            
+          }
           
         })
       )
       
-      data_now[[f]]=as.data.frame(table(data_now[[f]]))
-      data_now[[f]]=data_now[[f]][-which(data_now[[f]]$Freq==0),]
-      
+
     }
+    
+    data_now[[f]]=as.data.frame(table(data_now[[f]]))
+    which_0=which(data_now[[f]]$Freq==0)
+    if(length(which_0)>0) data_now[[f]]=data_now[[f]][-which_0,]
+    
+    
     
   }
   
@@ -1693,7 +1680,7 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
 #* Trend analysis
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
-#* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills, occupations, location,type)
+#* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills,occupations,location,type)
 #* @param date_format The date format of the stored data. Example (2025-01-02): "%Y-%m-%d"
 #* @param what What to investigate regarding dates-trends. Possible values: 'year' , 'month' , 'year_month'.
 #* @get /trend_analysis
@@ -1736,7 +1723,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     data_now <- do.call(
       rbind,
       lapply(data$items, function(x) {
-        if (length(x$skills) > 0) {
+        if (length(x$skills) > 0 & !is.null(x$skills)) {
           do.call(
             rbind,
             lapply(x$skills, function(y) {
@@ -1868,7 +1855,7 @@ multi_corresp_fun<-function(user_id="1",session_id="1",no_components=5,features_
     lapply(data$items, function(x) {
       items_now=c()
       for (f in features_query_split){
-        if(length(x[[f]])!=0){
+        if(length(x[[f]])!=0 & !is.null(x[[f]])){
           items_now[length(items_now)+1]=x[[f]]
           
         }else{
