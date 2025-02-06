@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  skillab-analysis:
+    container_name: skillab-charmanas-labor_market
+    image: skillab_labor_market
+    ports:
+      - "8873:8872"
+    restart: unless-stopped
