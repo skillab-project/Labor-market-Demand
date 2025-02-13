@@ -27,6 +27,7 @@ library(FactoMineR)
 
 
 
+
 plan(multisession)  # Enable multi-threading
 
 ###### plumber.R
@@ -1188,6 +1189,7 @@ load_user_session_file<-function(user_id="1",session_id="1",attribute="none",sub
 
 save_update_user_session_file<-function(user_id="1",session_id="1",variable_name="query",variable_value="keywords=market",subvariable_name=NULL){
   
+  
   #####File variables
   #query
   #data
@@ -1195,6 +1197,7 @@ save_update_user_session_file<-function(user_id="1",session_id="1",variable_name
   #Binary occupations
   #Binary propagated skills
   #Binary propagated occupations
+  
   all_files=list.files(path_user_files_all)
   
   user_folder=paste0("user_",user_id)
@@ -1250,7 +1253,9 @@ save_update_user_session_file<-function(user_id="1",session_id="1",variable_name
             data[[variable_name]]=list()
           }
           
-          data[[variable_name]][[subvariable_name]]=variable_value
+          #data[[variable_name]][[subvariable_name]]<-NULL
+          #data[[variable_name]]<-c(data[[variable_name]],list(subvariable_name=variable_value))
+          data[[variable_name]][[subvariable_name]]<-variable_value
           
         }
        
@@ -1261,6 +1266,8 @@ save_update_user_session_file<-function(user_id="1",session_id="1",variable_name
   saveRDS(data,paste0(path_user_files_all,user_folder,"/",session_file))
   
 }
+
+
 
 
 
@@ -1301,7 +1308,7 @@ function(url="",body="",user_id="",session_id=""){
 #* Retrieve information and outputs from a session 
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
-#* @param attribute The attribute to return. Current options: data - Returns all data, data_query_info - Returns the query information, all_stats - Returns output from Descriptive statistics,  all_stats_prop - Returns output from Descriptive statistics with propagation, explor_stats - Returns output from Exploratory Analytics. explor_stats_one - Returns output from Exploratory analysis given a filter, trend_anal - Returns output from Trend Analysis, skill_clust - Returns output from  Cluster analysis, multiple_cor - Returns output from Multiple Correspondence analysis
+#* @param attribute The attribute to return. Current options: data - Returns all data, data_query_info - Returns the query information, all_stats - Returns output from Descriptive statistics,  all_stats_prop - Returns output from Descriptive statistics with propagation, explor_stats - Returns output from Exploratory Analytics, explor_stats_prop - Returns output from Exploratory Analytics with propagation, explor_stats_one - Returns output from Exploratory analysis given a filter, explor_stats_one_prop - Returns output from Exploratory analysis given a filter with propagation,  trend_anal - Returns output from Trend Analysis, trend_anal_prop - Returns output from Trend Analysis with propagation, skill_clust - Returns output from  Cluster analysis, multiple_cor - Returns output from Multiple Correspondence analysis
 #* @param storage_name Code name of the desired outcome. This utility enables the existence of multiple outputs for each type of analysis.
 #* @get /get_data
 function(user_id,session_id,attribute,storage_name="none"){
@@ -1418,7 +1425,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query=""){
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
 #* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills,occupations,location,type)
 #* @get /analytics_descriptive
-function(user_id,session_id,storage_name=NULL,features_query=""){
+function(user_id,session_id,storage_name="",features_query=""){
  
   print("Descriptive statistics")
   
@@ -1439,6 +1446,7 @@ function(user_id,session_id,storage_name=NULL,features_query=""){
   })
   
 }
+
 
 
 analytics_prop_fun<-function(user_id="1",session_id="1",what='skills',pillar="Skill,Language",level="1,2"){
@@ -1481,7 +1489,7 @@ analytics_prop_fun<-function(user_id="1",session_id="1",what='skills',pillar="Sk
 #* @param pillar Pillars to analyze, only used for skills. It can contain multiple pillars separated by ','. Available options: Skill, Knowledge, Traversal, Language.
 #* @param level Taxonomy Levels to investigate. Single value for occupations or one level per pillar for skills should be provided. The levels should be separated by ',' (e.g. 0,3,2).
 #* @get /analytics_descriptive_propagation
-function(user_id="1",session_id="1",storage_name=NULL,what='skills',pillar="Skill,Language",level="1,2"){
+function(user_id="1",session_id="1",storage_name="",what='skills',pillar="Skill,Language",level="1,2"){
   
   print("Descriptive statistics with propagation")
   
@@ -1503,9 +1511,6 @@ function(user_id="1",session_id="1",storage_name=NULL,what='skills',pillar="Skil
   })
   
 }
-
-
-
 
 
 exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
@@ -1604,7 +1609,15 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
   if(length(which_0)>0)  data_now=data_now[-which_0,]
   data_now=data_now[order(data_now$Freq,decreasing = T),]
   
-  
+  for (i in 1:length(features_query_split)){
+    if(features_query_split[i]=="occupations"){
+      data_now[[features_query_split[i]]]=unlist(data_all_occupations$label[match(data_now[,i],data_all_occupations$id)])
+      
+    }else if(features_query_split[i]=="skills"){
+      data_now[[features_query_split[i]]]=unlist(data_all_skills$label[match(data_now[,i],data_all_skills$id)])
+      
+    }
+  }
   return(data_now)
   
 }
@@ -1615,7 +1628,7 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query=""){
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
 #* @param features_query Which features_query to be extracted from the imported data. They should be exactly two features separated using the character ',' (e.g. skills, occupations, location,type)
 #* @get /analytics_exploratory
-function(user_id="1",session_id="1",storage_name=NULL,features_query=""){
+function(user_id="1",session_id="1",storage_name="",features_query=""){
   
   print("Exploratory statistics")
   
@@ -1635,6 +1648,143 @@ function(user_id="1",session_id="1",storage_name=NULL,features_query=""){
     paste("Error loading data:", error$message)
   })
  
+  
+}
+
+
+
+exploratory_fun_prop<-function(user_id="1",session_id="1",features_query="",pillar_1="Skill,Language",pillar_2="",level_1="1,2",level_2="1,2"){
+  
+  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
+  
+  features_query=unlist(strsplit(features_query,","))
+  
+  data_now_list=list()
+  
+  for (i in 1:2){
+    if(i==1){
+      
+      pillar_now=pillar_1
+      level_now=level_1
+      
+    }else if (i==2){
+      
+      pillar_now=pillar_2
+      level_now=level_2
+      
+    }
+    
+    
+    if(nchar(level_now)!=0){
+      
+      data_now_list[[features_query[i]]]=return_double_to_occur_propagate(data = data,what = features_query[i],pillar = pillar_now,level=level_now)
+      
+      
+    }else{
+      
+      if(features_query[i]%in%c("skills","occupations")){
+        
+        data_now_temp <- do.call(
+          rbind,
+          lapply(data$items, function(x) {
+            if (length(x[[features_query[i]]]) > 0 & !is.null(x[[features_query[i]]])) {
+              do.call(
+                rbind,
+                lapply(x[[features_query[i]]], function(y) {
+                  return(data.frame(item_id = x$id, skill = y, stringsAsFactors = FALSE))
+                })
+              )
+            }
+          })
+        )
+        
+
+      }else{
+        
+        data_now_temp <- do.call(
+          rbind,
+          lapply(data$items, function(x) {
+            return(data.frame(item_id = x$id, skill = x[[features_query[i]]], stringsAsFactors = FALSE))
+            
+          } 
+          )
+        )
+        
+      }
+      
+      data_now_list[[features_query[i]]]=double_to_occur(data_now_temp)
+      
+    }
+    
+    
+    
+  }
+  
+  
+which_excl_1=which(!(rownames(data_now_list[[features_query[1]]])%in%rownames(data_now_list[[features_query[2]]])))
+if(length(which_excl_1)>0)data_now_list[[features_query[1]]]=data_now_list[[features_query[1]]][-which_excl_1,]
+
+which_excl_2=which(!(rownames(data_now_list[[features_query[2]]])%in%rownames(data_now_list[[features_query[1]]])))
+if(length(which_excl_2)>0)data_now_list[[features_query[2]]]=data_now_list[[features_query[2]]][-which_excl_2,]
+
+#check_row_names=table(rownames(data_now_list[[features_query[1]]])==rownames(data_now_list[[features_query[2]]]))
+
+co_occurence_mat_now=co_occurence_mat(data_now_list[[features_query[1]]],data_now_list[[features_query[2]]])
+#co_occurence_mat_now=data.frame("Item_1"=rownames(co_occurence_mat_now)[as.vector(row(co_occurence_mat_now))],"Item_2"=colnames(co_occurence_mat_now)[as.vector(col(co_occurence_mat_now))],"Freq"=as.vector(co_occurence_mat_now))
+co_occurence_mat_now=as.data.frame(as.table(co_occurence_mat_now))
+
+which_0=which(co_occurence_mat_now$Freq ==0 )
+if(length(which_0)>0)  co_occurence_mat_now=co_occurence_mat_now[-which_0,]
+co_occurence_mat_now=co_occurence_mat_now[order(co_occurence_mat_now$Freq,decreasing = T),]
+
+
+for (i in 1:length(features_query)){
+  if(features_query[i]=="occupations"){
+    co_occurence_mat_now[[features_query[i]]]=unlist(data_all_occupations$label[match(co_occurence_mat_now[,i],data_all_occupations$id)])
+    
+  }else if(features_query[i]=="skills"){
+    co_occurence_mat_now[[features_query[i]]]=unlist(data_all_skills$label[match(co_occurence_mat_now[,i],data_all_skills$id)])
+    
+  }
+  
+}
+
+
+
+return(co_occurence_mat_now)
+
+}
+
+#* Exploratory Analytics with propagation
+#* @param user_id The id of the user
+#* @param session_id The id session of the user's current session
+#* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
+#* @param features_query Which features_query to be extracted from the imported data. They should be exactly two features separated using the character ',' (e.g. skills, occupations, location,type)
+#* @param pillar_1 Pillars to analyze for the first variable, only used for skills. It can contain multiple pillars separated by ','. Available options: Skill, Knowledge, Traversal, Language. It should be empty if propagation is not required.
+#* @param level_1 Taxonomy Levels to investigate for the first variable. Single value for occupations or one level per pillar for skills should be provided. The levels should be separated by ',' (e.g. 0,3,2). It should be empty if propagation is not required
+#* @param pillar_2 Pillars to analyze for the second variable, only used for skills. It can contain multiple pillars separated by ','. Available options: Skill, Knowledge, Traversal, Language. It should be empty if propagation is not required.
+#* @param level_2 Taxonomy Levels to investigate for the second variable. Single value for occupations or one level per pillar for skills should be provided. The levels should be separated by ',' (e.g. 0,3,2). It should be empty if propagation is not required
+#* @get /analytics_exploratory_prop
+function(user_id="1",session_id="1",storage_name="",features_query="",pillar_1="Skill,Language",pillar_2="Skill,Language",level_1="1,2",level_2="1,2"){
+  
+  print("Exploratory statistics with propagation")
+  
+  future({
+    
+    data_now=exploratory_fun_prop(user_id = user_id, session_id = session_id,features_query = features_query,pillar_1=pillar_1,pillar_2=pillar_2,level_1=level_1,level_2=level_2)  # Simulate the API call
+    save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'explor_stats_prop',variable_value = data_now,subvariable_name = storage_name)
+    return(data_now)
+  }) %...>% {  # On success
+    
+    data_now <- . 
+    
+    
+    return(data_now)
+    
+  } %...!% (function(error) {  # On error (Parentheses added here)
+    paste("Error loading data:", error$message)
+  })
+  
   
 }
 
@@ -1762,11 +1912,11 @@ exploratory_fun_one<-function(user_id="1",session_id="1",target_feature,target_v
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
-#* @param target_feature Data feature to inspect
+#* @param target_feature Data feature to inspect (e.g. skills, occupations, location,type).
 #* @param target_values Values of the target feature to inspect. Multiple values are supported and can be separated with the coma (",").
-#* @param features_query Which features to be inspected for exploratory analysis with respect to the target values. They should be exactly two features separated using the character ',' (e.g. skills, occupations, location,type)
+#* @param features_query Which features to be inspected for exploratory analysis with respect to the target values. They should be exactly two features separated using the character ',' (e.g. skills, occupations, location,type).
 #* @get /analytics_exploratory_filt
-function(user_id="1",session_id="1",storage_name=NULL,target_feature,target_values,features_query=""){
+function(user_id="1",session_id="1",storage_name="",target_feature,target_values,features_query=""){
   
   print("Exploratory statistics with filtering")
   
@@ -1774,6 +1924,217 @@ function(user_id="1",session_id="1",storage_name=NULL,target_feature,target_valu
     
     data_now=exploratory_fun_one(user_id = user_id, session_id = session_id,target_feature = target_feature,target_values = target_values,features_query = features_query)  # Simulate the API call
     save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'explor_stats_one',variable_value = data_now,subvariable_name = storage_name)
+    return(data_now)
+  }) %...>% {  # On success
+    
+    data_now <- . 
+    
+    
+    return(data_now)
+    
+  } %...!% (function(error) {  # On error (Parentheses added here)
+    paste("Error loading data:", error$message)
+  })
+  
+  
+}
+
+
+exploratory_fun_one_prop<-function(user_id="1",session_id="1",storage_name="",target_feature,target_values,features_query="",pillar="Skill,Language",level="1,2"){
+  
+  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data$items
+  
+  
+  target_values_split=unlist(strsplit(target_values,","))
+
+  data_now_list_target=list()
+  
+  
+  if(target_feature=="skills_prop"){
+    tf_now_temp="skills"
+  }else if(target_feature=="occupations_prop"){
+    tf_now_temp="occupations"
+  }else{
+    tf_now_temp=target_feature
+    
+  }
+  
+  
+  for (i in 1:length(data)){
+    
+    if (length(data[[i]][[tf_now_temp]]) > 0 & !is.null(data[[i]][[tf_now_temp]]) ) {
+      tf_list=unlist((data[[i]][[tf_now_temp]]))
+      for (tf_temp in tf_list){
+        if(is.null(data_now_list_target[[tf_temp]])){
+          data_now_list_target[[tf_temp]]=c(i)
+        }else{
+          data_now_list_target[[tf_temp]]=c(data_now_list_target[[tf_temp]],i)
+        }
+      }
+    }
+    
+  }
+  
+  names_target=names(data_now_list_target)
+  names_target_in=c()
+  
+  if(target_feature=="skills_prop"){
+    
+    for (nt in names_target){
+      i=match(nt,data_all_skills$id)
+      temp_ancestors=unlist(data_all_skills[i,c("skill_ancestors","knowledge_ancestors","traversal_ancestors","language_ancestors")])
+      
+      if(any(target_values_split%in%temp_ancestors)){
+        names_target_in=c(names_target_in,nt)
+      }
+      
+    }
+    
+  }else if(target_feature=="occupations_prop"){
+    
+    for (nt in names_target){
+      i=match(nt,data_all_occupations$id)
+      
+      temp_ancestors=unlist(data_all_occupations[i,c("ancestors")])
+      
+      if(any(target_values_split%in%temp_ancestors)){
+        names_target_in=c(names_target_in,nt)
+      }
+      
+    }
+    
+  }else{
+    
+    for (nt in names_target){
+      
+
+      if(any(target_values_split%in%c(nt))){
+        names_target_in=c(names_target_in,nt)
+      }
+      
+    }
+    
+  }
+  
+  data_now_list_target=data_now_list_target[names_target_in]
+  
+  data_now_list_target=unique(unlist(data_now_list_target))
+  
+  
+  data_now_list_feature=list()
+  
+  
+  for (i in data_now_list_target){
+    
+    if (length(data[[i]][[features_query]]) > 0 & !is.null(data[[i]][[features_query]]) ) {
+      ff_list=unlist(data[[i]][[features_query]])
+      
+      for (ff_temp in ff_list){
+        if(is.null(data_now_list_feature[[ff_temp]])){
+          data_now_list_feature[[ff_temp]]=c(i)
+        }else{
+          data_now_list_feature[[ff_temp]]=c(data_now_list_feature[[ff_temp]],i)
+        }
+      }
+      
+    }
+    
+  }
+  
+  
+  
+  if(features_query=="skills"){
+    
+    if(nchar(level)>0){
+      #Skill, Knowledge, Traversal, Language
+      #skill_ancestors , knowledge_ancestors , traversal_ancestors , language_ancestors
+
+    
+      table_map=propagation_skills(data = NULL,urls=names(data_now_list_feature),pillar = pillar,level = level)
+      
+      
+      data_now_list_feature_new=list()
+      
+      for (name_now_org in names(data_now_list_feature)){
+        
+        which_in=which(table_map[,1]==name_now_org)
+        if(length(which_in)>0){
+          for (name_now_anc in table_map[which_in,2]){
+            data_now_list_feature_new[[name_now_anc]]=c(data_now_list_feature_new[[name_now_anc]],unlist(data_now_list_feature[[name_now_org]]))
+          }
+        }
+      }
+    
+      data_now_list_feature=data_now_list_feature_new
+      
+    }
+    
+    
+  }else if(features_query=="occupations"){
+    
+    if(nchar(level)>0){
+      
+      table_map=propagation_occupations(data = NULL,urls=names(data_now_list_feature),level = level)
+      
+      
+      data_now_list_feature_new=list()
+      
+      for (name_now_org in names(data_now_list_feature)){
+        
+        which_in=which(table_map[,1]==name_now_org)
+        if(length(which_in)>0){
+          for (name_now_anc in table_map[which_in,2]){
+            data_now_list_feature_new[[name_now_anc]]=c(data_now_list_feature_new[[name_now_anc]],unlist(data_now_list_feature[[name_now_org]]))
+          }
+        }
+        
+      
+      }
+      
+      data_now_list_feature=data_now_list_feature_new
+      
+    }
+    
+  }
+  
+  data_now_list_feature=data.frame("Item"=names(data_now_list_feature),"Freq"=unlist(lapply(data_now_list_feature,function(x)length(x))))
+  data_now_list_feature=data_now_list_feature[order(data_now_list_feature$Freq,decreasing = T),]
+
+  
+  
+  if(features_query=="occupations"){
+      data_now_list_feature[[features_query]]=unlist(data_all_occupations$label[match(data_now_list_feature[,1],data_all_occupations$id)])
+      
+  }else if(features_query=="skills"){
+      data_now_list_feature[[features_query]]=unlist(data_all_skills$label[match(data_now_list_feature[,1],data_all_skills$id)])
+      
+  }
+    
+  
+  return(data_now_list_feature)
+    
+}
+
+
+
+#* Exploratory Analytics with filtering and propagation
+#* @param user_id The id of the user
+#* @param session_id The id session of the user's current session
+#* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
+#* @param target_feature Data feature to inspect (e.g. skills, occupations, location,type). If target_feature is equal to 'skills_prop' or 'occupations_prop' then the data are filtered with propagation
+#* @param target_values Values of the target feature to inspect. Multiple values are supported and can be separated with the coma (","). If target_feature is equal to 'skills_prop' or 'occupations_prop' then these target values are searched in the ESCO hierarchy trees
+#* @param features_query Which feature to be inspected for exploratory analysis with respect to the target values. It should be exactly one feature.
+#* @param pillar Pillars to analyze, only used for skills. It can contain multiple pillars separated by ','. Available options: Skill, Knowledge, Traversal, Language.
+#* @param level Taxonomy Levels to investigate. Single value for occupations or one level per pillar for skills should be provided. The levels should be separated by ',' (e.g. 0,3,2).
+#* @get /analytics_exploratory_filt_prop
+function(user_id="1",session_id="1",storage_name="",target_feature,target_values,features_query="",pillar="Skill,Language",level="1,2"){
+  
+  print("Exploratory statistics with filtering")
+  
+  future({
+    
+    data_now=exploratory_fun_one_prop(user_id = user_id, session_id = session_id,target_feature = target_feature,target_values = target_values,features_query = features_query,pillar=pillar,level=level)  # Simulate the API call
+    save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'explor_stats_one_prop',variable_value = data_now,subvariable_name = storage_name)
     return(data_now)
   }) %...>% {  # On success
     
@@ -1844,6 +2205,7 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
         })
       )
       
+
   
     }else{
       
@@ -1864,9 +2226,17 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
     
     data_now[[f]]=as.data.frame(table(data_now[[f]]))
     which_0=which(data_now[[f]]$Freq==0)
+    data_now[[f]]=data_now[[f]][order(data_now[[f]]$Freq,decreasing = T),]
+    
     if(length(which_0)>0) data_now[[f]]=data_now[[f]][-which_0,]
     
-    
+    if(f=="occupations"){
+      data_now[[f]]$label=unlist(data_all_occupations$label[match(data_now[[f]][,2],data_all_occupations$id)])
+      
+    }else if(f=="skills"){
+      data_now[[f]]$label=unlist(data_all_skills$label[match(data_now[[f]][,2],data_all_skills$id)])
+      
+    }
     
   }
   
@@ -1878,11 +2248,12 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
+#* @param date_field Variable storing the date within the data
 #* @param features_query Which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. skills,occupations,location,type)
 #* @param date_format The date format of the stored data. Example (2025-01-02): "%Y-%m-%d"
 #* @param what What to investigate regarding dates-trends. Possible values: 'year' , 'month' , 'year_month'.
 #* @get /trend_analysis
-function(user_id="1",session_id="1",storage_name=NULL,date_field="upload_date",features_query="location,type",date_format="%Y-%m-%d",what="year"){
+function(user_id="1",session_id="1",storage_name="",date_field="upload_date",features_query="location,type",date_format="%Y-%m-%d",what="year"){
   print("Trend Analysis")
   
   
@@ -1903,6 +2274,102 @@ function(user_id="1",session_id="1",storage_name=NULL,date_field="upload_date",f
     paste("Error loading data:", error$message)
   })
 }
+
+
+trend_anal_fun_prop<-function(user_id="1",session_id="1",date_field="upload_date",features_query="",date_format="%Y-%m-%d",what="year",pillar,level){
+  
+  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
+
+  if(what=="year"){
+    digits_to_see_start=1
+    digits_to_see_end=4
+  }else if (what=="month"){
+    digits_to_see_start=5
+    digits_to_see_end=7
+  }else if (what=="year_month"){
+    digits_to_see_start=1
+    digits_to_see_end=7
+  }
+  
+  dates_now=do.call(
+    rbind,
+    lapply(data$items,function(x){
+    temp_now=unlist(strsplit(x[[date_field]]," "))[[1]]
+    temp_now=as.Date(x = temp_now,format=date_format)
+    temp_now=substr(temp_now,start=digits_to_see_start,stop = digits_to_see_end)
+    return(data.frame("Id"=x$id,"Date"=temp_now))
+  })
+  )
+  
+  dates_now=double_to_occur(dates_now)
+  
+  gc()
+  
+  
+  data_now=return_double_to_occur_propagate(data = data, what = features_query,pillar = pillar,level = level)
+  
+  
+  which_excl_1=which(!(rownames(dates_now)%in%rownames(data_now)))
+  if(length(which_excl_1)>0)dates_now=dates_now[-which_excl_1,]
+  
+  which_excl_2=which(!(rownames(data_now)%in%rownames(dates_now)))
+  if(length(which_excl_2)>0)data_now=data_now[-which_excl_2,]
+  
+
+  co_occurence_mat_now=co_occurence_mat(data_now,dates_now)
+  #co_occurence_mat_now=data.frame("Item_1"=rownames(co_occurence_mat_now)[as.vector(row(co_occurence_mat_now))],"Item_2"=colnames(co_occurence_mat_now)[as.vector(col(co_occurence_mat_now))],"Freq"=as.vector(co_occurence_mat_now))
+  co_occurence_mat_now=as.data.frame(as.table(co_occurence_mat_now))
+  
+  which_0=which(co_occurence_mat_now$Freq ==0 )
+  if(length(which_0)>0)  co_occurence_mat_now=co_occurence_mat_now[-which_0,]
+  co_occurence_mat_now=co_occurence_mat_now[order(co_occurence_mat_now$Freq,decreasing = T),]
+  
+  if(features_query=="occupations"){
+    co_occurence_mat_now$label=unlist(data_all_occupations$label[match(co_occurence_mat_now[,1],data_all_occupations$id)])
+    
+  }else if(features_query=="skills"){
+    co_occurence_mat_now$label=unlist(data_all_skills$label[match(co_occurence_mat_now[,1],data_all_skills$id)])
+    
+  }
+  
+  return(co_occurence_mat_now)
+  
+}
+
+#* Trend analysis with propagation
+#* @param user_id The id of the user
+#* @param session_id The id session of the user's current session
+#* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
+#* @param date_field Variable storing the date within the data
+#* @param features_query Which feature to be extracted from the imported data. It should be exactly one (skills or occupations)
+#* @param date_format The date format of the stored data. Example (2025-01-02): "%Y-%m-%d"
+#* @param what What to investigate regarding dates-trends. Possible values: 'year' , 'month' , 'year_month'.
+#* @param pillar Pillars to analyze, only used for skills. It can contain multiple pillars separated by ','. Available options: Skill, Knowledge, Traversal, Language.
+#* @param level Taxonomy Levels to investigate. Single value for occupations or one level per pillar for skills should be provided. The levels should be separated by ',' (e.g. 0,3,2).
+#* @get /trend_analysis_prop
+function(user_id="1",session_id="1",storage_name="",date_field="upload_date",features_query="location,type",date_format="%Y-%m-%d",what="year",pillar="Skill,Language",level="1,2"){
+  print("Trend Analysis with propagation")
+  
+  
+  future({
+    
+    data_now=trend_anal_fun_prop(user_id=user_id,session_id=session_id,date_field=date_field,features_query=features_query,date_format=date_format,what=what,pillar = pillar,level = level)  # Simulate the API call
+    save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'trend_anal_prop',variable_value = data_now,subvariable_name = storage_name)
+    return(data_now)
+    
+  }) %...>% {  # On success
+    
+    data_now <- . 
+    
+    
+    return(data_now)
+    
+  } %...!% (function(error) {  # On error (Parentheses added here)
+    paste("Error loading data:", error$message)
+  })
+}
+
+
 
 
 skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weigthing'){
@@ -1936,7 +2403,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     
   }else{
     
-    data_now=return_double_to_occur_propagate(what = "skills",pillar = pillar,level=level)
+    data_now=return_double_to_occur_propagate(data = data,what = "skills",pillar = pillar,level=level)
     
   }
   
@@ -2017,7 +2484,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
 #* @param level Taxonomy Levels to investigate. Only available when pillar is not empty. One level per pillar should be provided. The levels should be separated by ',' (e.g. 0,3,2).
 #* @param vectors_type Ways to project skill vectors. Currently, you can use weigthing (See weight_now) or GloVe. GloVe should be only used when type_now is kmeans or gmm.
 #* @get /skillcluster
-function(type_now="kmeans",user_id="1",session_id="1",storage_name=NULL,weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting') {
+function(type_now="kmeans",user_id="1",session_id="1",storage_name="",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting') {
   
   print("Skill Clustering")
   
@@ -2094,7 +2561,7 @@ multi_corresp_fun<-function(user_id="1",session_id="1",no_components=5,features_
 #* @param features_query which features_query to be extracted from the imported data. They should be separated using the character ',' (e.g. location,type)
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
 #* @get /multicorr
-function(user_id="1",session_id="1",storage_name=NULL,no_components=5,features_query="location,type"){
+function(user_id="1",session_id="1",storage_name="",no_components=5,features_query="location,type"){
   
   print("Multiple Correspondence Analysis")
   
