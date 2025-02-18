@@ -2,8 +2,11 @@ version: '3.8'
 
 services:
   skillab-analysis:
-    container_name: skillab-charmanas-labor_market
+    container_name: ${APP_NAME}
+    image: ${DOCKER_REG}${DOCKER_REPO}${APP_NAME}:${DOCKER_TAG}
     build: .
     ports:
       - "8873:8872"
+    labels:
+      io.portainer.accesscontrol.teams: trace-all
     restart: unless-stopped
