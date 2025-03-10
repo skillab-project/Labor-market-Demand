@@ -1,8 +1,7 @@
 
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-path_user_files_all="~/user_sessions"
-
+path_user_files_all="~/user_sessions/"
 
 library(plumber)
 library(future)
@@ -30,6 +29,7 @@ library(FactoMineR)
 plan(multisession)  # Enable multi-threading
 
 ###### plumber.R
+
 set_config(config(ssl_verifypeer = FALSE))
 
 
@@ -968,9 +968,9 @@ affinity_clust_plot <-function(all_pairs_similarity,diag_values){
   new_clust_plot <- ggplotly(ggplot(data = df, aes(x,y,label=Label,colour=cluster)) +
                                geom_point(size=2)+#(colour=cluster,size=1)+#palete_col[df$cluster]
                                
-                               geom_text(data=df[ap_clust@exemplars,],aes(x,y,label=Label))+
+                               geom_text(data=df[ap_clust@exemplars,],aes(x,y,label=Label),nudge_y = 0.2)+
                                geom_segment(data=g_matrix,aes(x=from.x,xend = to.x, y=from.y,yend = to.y)
-                                            ,colour=palete_col[g_matrix$Label],size=0.1)+
+                                            ,colour="black",size=0.1)+#,colour=palete_col[g_matrix$Label]
                                #theme_solid()
                                #theme_ipsum_ps()
                                #theme_solarized_2()+
@@ -1281,6 +1281,19 @@ save_update_user_session_file<-function(user_id="1",session_id="1",variable_name
 #* @apiTitle Skillab analytics and skill clustering
 #* @apiDescription Conduct descriptive and exploratory analytics on the various data fields. In addition, functionalities for skill clustering and correspondence analysis are supported as well.
 
+#* @filter cors
+cors <- function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")  # Allow all origins
+  res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res$setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+  
+  if (req$REQUEST_METHOD == "OPTIONS") {
+    res$status <- 200
+    return(list())
+  } else {
+    forward()
+  }
+}
 
 #* Load Data from API
 #* @param user_id The id of the user
