@@ -2,6 +2,7 @@
 FROM rocker/rstudio:latest
 
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
