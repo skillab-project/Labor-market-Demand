@@ -62,7 +62,8 @@ api_ex_now_one<-function(url,body=list()){
       `Content-Type` = "application/x-www-form-urlencoded"
     ),
     body = body,
-    encode = "form"
+    encode = "form",
+    config(ssl_verifypeer = FALSE)
   )
   
   # Parse the JSON response into a list
@@ -108,7 +109,8 @@ api_ex_now<-function(url,body=list(),per_page=300,limit_data_no=""){
       `Content-Type` = "application/x-www-form-urlencoded"
     ),
     body = body,
-    encode = "form"
+    encode = "form",
+    config(ssl_verifypeer = FALSE)
   )
   
 
@@ -145,7 +147,8 @@ api_ex_now<-function(url,body=list(),per_page=300,limit_data_no=""){
           `Content-Type` = "application/x-www-form-urlencoded"
         ),
         body = body,
-        encode = "form"
+        encode = "form",
+        config(ssl_verifypeer = FALSE)
       )
       
       items$items <- c(items$items,as.list(content(response, "parsed"))$items)
