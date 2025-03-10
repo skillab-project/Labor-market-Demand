@@ -30,7 +30,7 @@ library(FactoMineR)
 plan(multisession)  # Enable multi-threading
 
 ###### plumber.R
-
+set_config(config(ssl_verifypeer = FALSE))
 
 
 ###API example one page
