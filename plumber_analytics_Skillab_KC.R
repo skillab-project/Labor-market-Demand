@@ -37,11 +37,11 @@ plan(multisession)  # Enable multi-threading
 api_ex_now_one<-function(url,body=list()){
   
   #API default
-  #http://skillab-tracker.csd.auth.gr/api/docs#/Job/api_views_get_jobs
+  #https://skillab-tracker.csd.auth.gr/api/docs#/Job/api_views_get_jobs
   
   #Define the API endpoint and parameters
-  #url <- "http://skillab-tracker.csd.auth.gr/api/jobs?page=1"
-  #url <- "http://skillab-tracker.csd.auth.gr/api/law-publications?page=1"
+  #url <- "https://skillab-tracker.csd.auth.gr/api/jobs?page=1"
+  #url <- "https://skillab-tracker.csd.auth.gr/api/law-publications?page=1"
   
   #Define the POST request body
   #body <- 'keywords=seller&keywords=market'
@@ -83,12 +83,12 @@ api_ex_now_one<-function(url,body=list()){
 ###API example all pages
 api_ex_now<-function(url,body=list(),per_page=300,limit_data_no=""){
   
-  #url <- "http://skillab-tracker.csd.auth.gr/api/jobs"
+  #url <- "https://skillab-tracker.csd.auth.gr/api/jobs"
   #body <- 'keywords=seller&keywords=market'
   #per_page <- 300
   
   #Exmaples body and url
-  #url=paste0("http://skillab-tracker.csd.auth.gr/api/skills",page)
+  #url=paste0("https://skillab-tracker.csd.auth.gr/api/skills",page)
   #body=list(min_skill_level=1) OR body="min_skill_level=1"
   
   #Define parameters
@@ -195,7 +195,7 @@ flatten_list_skills <- function(item) {
 }
 
 ###Get all skills
-url="http://skillab-tracker.csd.auth.gr/api/skills"
+url="https://skillab-tracker.csd.auth.gr/api/skills"
 #body="min_skill_level=3"
 print("Loading Skill Data")
 data_all_skills=api_ex_now(url)
@@ -228,7 +228,7 @@ flatten_list_occupations <- function(item) {
 }
 
 ###Get all occupations
-url="http://skillab-tracker.csd.auth.gr/api/occupations"
+url="https://skillab-tracker.csd.auth.gr/api/occupations"
 #body="min_level=1"
 
 print("Loading Occupation Data")
@@ -480,7 +480,7 @@ propagation_skills <-function(data,urls,pillar="Skill,Language",level="1,2"){
 double_to_occur_with_propagation_skills_example <-function(){
   
   
-  url="http://skillab-tracker.csd.auth.gr/api/jobs"
+  url="https://skillab-tracker.csd.auth.gr/api/jobs"
   body="keywords=seller&keywords=market"
   
   data =  api_ex_now(url,body)
@@ -667,7 +667,7 @@ propagation_occupations <-function(data,urls,level="1"){
 ###Example double to occur with propagation in occupations
 double_to_occur_with_propagation_occupations_example <-function(){
   
-  url="http://skillab-tracker.csd.auth.gr/api/jobs"
+  url="https://skillab-tracker.csd.auth.gr/api/jobs"
   body="keywords=seller&keywords=market"
   
   data =  api_ex_now(url,body)
@@ -1282,7 +1282,7 @@ save_update_user_session_file<-function(user_id="1",session_id="1",variable_name
 #* Load Data from API
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
-#* @param url Url of the endpoint (e.g. http://skillab-tracker.csd.auth.gr/api/jobs)
+#* @param url Url of the endpoint (e.g. https://skillab-tracker.csd.auth.gr/api/jobs)
 #* @param body Body for the POST API call (e.g. keywords=seller&keywords=market)
 #* @param limit_data_no Maximum number of observations to return. Default value is 1000
 #* @get /load_data
