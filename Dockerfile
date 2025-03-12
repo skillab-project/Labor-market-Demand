@@ -53,6 +53,8 @@ RUN R -e "if (!requireNamespace('plumber', quietly = TRUE)) { stop('plumber not 
 WORKDIR /app
 COPY . /app
 
+RUN mkdir -p ~/user_sessions/
+
 # Expose the API ports
 EXPOSE 8872
 
