@@ -56,4 +56,4 @@ COPY . /app
 EXPOSE 8872
 
 # Default command to run the API on port 8872
-CMD ["Rscript", "-e", "plumber::plumb('/app/plumber_analytics_Skillab_KC.R')$run(host='0.0.0.0', port=8872)"]
+CMD ["Rscript", "-e", "plumber::plumb('/app/plumber_analytics_Skillab_fin.R')$run(host='0.0.0.0', port=8872)"]
