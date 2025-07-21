@@ -1,5 +1,7 @@
 
-path_user_files_all="~/user_sessions/"
+#path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
+path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
+#path_user_files_all="~/user_sessions/"
 
 
 
@@ -37,7 +39,7 @@ plan(multisession)  # Enable multi-threading
 
 
 ###Get token
-get_valid_token <- function() {
+get_valid_token <- function(API_BASE_URL,USERNAME,PASSWORD) {
   response <- POST(
     paste0(API_BASE_URL, "/login"),
     body = list(username = USERNAME, password = PASSWORD),
@@ -117,7 +119,7 @@ api_ex_now<-function(url,body=list(),per_page=100,limit_data_no=""){
   USERNAME=Sys.getenv("USERNAME")
   PASSWORD=Sys.getenv("PASSWORD")
   
-  bearer_token=get_valid_token()
+  bearer_token=get_valid_token(API_BASE_URL,USERNAME,PASSWORD)
   
   #url="https://skillab-tracker.csd.auth.gr/api/skills"
   
