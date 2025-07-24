@@ -46,6 +46,7 @@ RUN R -e "install.packages('ggrepel')"
 RUN R -e "install.packages('ggforce')"
 RUN R -e "install.packages('binda')"
 RUN R -e "install.packages('FactoMineR')"
+RUN R -e "install.packages('dotenv')"
 
 RUN R -e "if (!requireNamespace('plumber', quietly = TRUE)) { stop('plumber not installed') }"
 
@@ -59,4 +60,4 @@ RUN mkdir -p ~/user_sessions/
 EXPOSE 8872
 
 # Default command to run the API on port 8872
-CMD ["Rscript", "-e", "plumber::plumb('/app/plumber_analytics_Skillab_KC.R')$run(host='0.0.0.0', port=8872)"]
+CMD ["Rscript", "-e", "plumber::plumb('/app/plumber_analytics_Skillab_fin.R')$run(host='0.0.0.0', port=8872)"]
