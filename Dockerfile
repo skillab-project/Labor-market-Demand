@@ -2,6 +2,7 @@
 FROM rocker/rstudio:latest
 
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
@@ -45,12 +46,15 @@ RUN R -e "install.packages('ggrepel')"
 RUN R -e "install.packages('ggforce')"
 RUN R -e "install.packages('binda')"
 RUN R -e "install.packages('FactoMineR')"
+RUN R -e "install.packages('dotenv')"
 
 RUN R -e "if (!requireNamespace('plumber', quietly = TRUE)) { stop('plumber not installed') }"
 
 # Copy your application code to the Docker container
 WORKDIR /app
 COPY . /app
+
+RUN mkdir -p ~/user_sessions/
 
 # Expose the API ports
 EXPOSE 8872
