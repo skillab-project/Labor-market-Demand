@@ -21,11 +21,11 @@ pipeline {
             steps {
                 echo "***** Building Docker Image *****"
                 withCredentials([usernamePassword(credentialsId: 'tracker-api-creds', usernameVariable: 'TRACKER_USER', passwordVariable: 'TRACKER_PASS')]) {
-                    sh """
+                    sh '''
                         echo "REACT_APP_API_URL_TRACKER_USERNAME=${TRACKER_USER}" >> .env
                         echo "REACT_APP_API_URL_TRACKER_PASSWORD=${TRACKER_PASS}" >> .env
                         DOCKER_TAG=test docker compose build
-                    """
+                    '''
                 }
             }
         }
@@ -43,7 +43,7 @@ pipeline {
                     [$class: 'UsernamePasswordMultiBinding', credentialsId: 'tracker-api-creds', usernameVariable: 'TRACKER_USER', passwordVariable: 'TRACKER_PASS']
                 ]){
                     echo "***** Push Docker Image *****"
-                    sh """
+                    sh '''
                         echo "REACT_APP_API_URL_TRACKER_USERNAME=${TRACKER_USER}" >> .env
                         echo "REACT_APP_API_URL_TRACKER_PASSWORD=${TRACKER_PASS}" >> .env
                         docker compose build
@@ -51,7 +51,7 @@ pipeline {
                         docker image push ${DOCKER_REG}${DOCKER_REPO}${APP_NAME}:${DOCKER_TAG}
                         DOCKER_TAG="latest" docker compose build
                         docker image push ${DOCKER_REG}${DOCKER_REPO}${APP_NAME}:latest
-                    """
+                    '''
                 }
             }
         }
