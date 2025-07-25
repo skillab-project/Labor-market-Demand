@@ -115,7 +115,7 @@ api_ex_now_one<-function(url,body=list()){
 api_ex_now<-function(url,body=list(),per_page=100,limit_data_no=""){
   
   
-  API_BASE_URL=Sys.getenv("API_BASE_URL")
+  API_BASE_URL="	https://skillab-tracker.csd.auth.gr"
   USERNAME=Sys.getenv("USERNAME")
   PASSWORD=Sys.getenv("PASSWORD")
   
