@@ -1312,7 +1312,7 @@ cors <- function(req, res) {
 #* @param body Body for the POST API call (e.g. keywords=seller&keywords=market)
 #* @param limit_data_no Maximum number of observations to return. Leave empty if you want to return all.
 #* @get /load_data
-function(url,body,user_id,session_id,limit_data_no=""){
+function(url,body="",user_id,session_id,limit_data_no=""){
   
   print("Loading Data")
   
@@ -2748,9 +2748,8 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   
   gc()
   
-  #clust_output[[1]]=plotly_json(clust_output[[1]])
-  clust_output[[1]]=NULL
   clust_output[[1]]$Pref_Label=unlist(data_all_skills$label[match(clust_output[[1]]$Label,data_all_skills$id)])
+  
   return(clust_output)
   
 }
