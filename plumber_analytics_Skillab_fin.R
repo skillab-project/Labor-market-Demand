@@ -948,7 +948,6 @@ query_pos_fun<-function(data,target_feature,target_value){
     
     if(is_numeric_fun(target_value))target_value=as.numeric(target_value)
     
-    
     target_feature_new=substr(target_feature,6,nchar(target_feature))
     condition_new=substr(target_feature,3,4)
     
@@ -989,7 +988,65 @@ query_pos_fun<-function(data,target_feature,target_value){
       }
     }
     
-  }else{
+  }else if(substr(target_feature,1,2)=="!?"){
+    
+    #!?GEY_upload_date -> Y =year , M=month , B=year_month
+
+    target_feature_new=substr(target_feature,7,nchar(target_feature))
+    condition_new=substr(target_feature,3,4)
+    
+    
+    if(substr(target_feature,5,5)=="Y"){
+      value_char=c(1,4)
+    }else if(substr(target_feature,5,5)=="M"){
+      value_char=c(6,7)
+    }else if (substr(target_feature,5,5)=="B"){
+      value_char=c(1,7)
+    }
+    
+    
+    if(condition_new=="EQ"){
+      for(i in 1:length(data$items)){
+        temp_items=unlist(data$items[[i]][[target_feature_new]])
+        if(length(temp_items)>0){
+          temp_items=substr(temp_items,value_char[1],value_char[2])
+          if(temp_items==target_value)positions_query=c(positions_query,i)
+        }
+      }
+    }else if(condition_new=="GR"){
+      for(i in 1:length(data$items)){
+        temp_items=unlist(data$items[[i]][[target_feature_new]])
+        if(length(temp_items)>0){
+          temp_items=substr(temp_items,value_char[1],value_char[2])
+          if(temp_items>target_value)positions_query=c(positions_query,i)
+        }
+      }
+    }else if(condition_new=="GE"){
+      for(i in 1:length(data$items)){
+        temp_items=unlist(data$items[[i]][[target_feature_new]])
+        if(length(temp_items)>0){
+          temp_items=substr(temp_items,value_char[1],value_char[2])
+          if(temp_items>=target_value)positions_query=c(positions_query,i)
+        }
+      }
+    }else if(condition_new=="LO"){
+      for(i in 1:length(data$items)){
+        temp_items=unlist(data$items[[i]][[target_feature_new]])
+        if(length(temp_items)>0){
+          temp_items=substr(temp_items,value_char[1],value_char[2])
+          if(temp_items<target_value)positions_query=c(positions_query,i)
+        }
+      }
+    }else if(condition_new=="LE"){
+      for(i in 1:length(data$items)){
+        temp_items=unlist(data$items[[i]][[target_feature_new]])
+        if(length(temp_items)>0){
+          temp_items=substr(temp_items,value_char[1],value_char[2])
+          if(temp_items<=target_value)positions_query=c(positions_query,i)
+        }
+      }
+    }
+    }else{
     if(target_feature=="skill_propagation"|target_feature=="occupation_propagation"){
       
       if(length(grep("skill_propagation",target_feature))>0){
@@ -1069,6 +1126,7 @@ query_pos_fun<-function(data,target_feature,target_value){
   return(positions_query)
   
 }
+
 
 multi_query_fun<-function(user_id="1",session_id="1",target_query,values_query,type_query,data=NULL){
   #target_query="'occupations'=='http://data.europa.eu/esco/isco/C1412'OR'experience_level'=='Mid-level'"
@@ -1254,7 +1312,7 @@ cors <- function(req, res) {
 #* @param body Body for the POST API call (e.g. keywords=seller&keywords=market)
 #* @param limit_data_no Maximum number of observations to return. Leave empty if you want to return all.
 #* @get /load_data
-function(url,body,user_id,session_id,limit_data_no=""){
+function(url,body="",user_id,session_id,limit_data_no=""){
   
   print("Loading Data")
   
@@ -1493,13 +1551,13 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query="",data=NULL
       rbind,
       lapply(data$items, function(x) {
         x_list=unlist(x[[features_query_split[1]]])  
-        
+        x_list=unique(x_list)
         
         if(length(x_list)>1&!is.null(x_list)){
           
           return_list=list(c1=c(),c2=c())
           
-          x_list=unique(x_list)
+
           x_list=sort(x_list)
           
           for(i in 1:(length(x_list)-1)){
@@ -1713,10 +1771,11 @@ function(user_id,session_id,storage_name,features_query,pillar_1="",pillar_2="",
 }
 
 
-exploratory_fun_one<-function(user_id="1",session_id="1",target_feature,target_values,features_query){
+exploratory_fun_one<-function(user_id="1",session_id="1",target_feature,target_values,features_query,data=NULL){
   
-  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data$items
+  if(is.null(data)) data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
+  data<-data$items
   
   #data_now=api_ex_now(url,body)
   features_query_split=unlist(strsplit(features_query,";;"))
@@ -1765,7 +1824,7 @@ exploratory_fun_one<-function(user_id="1",session_id="1",target_feature,target_v
 
   for (f in features_query_split){
       
-      data_now_list[[f]]=table(data_now_list[[f]])
+      data_now_list[[f]]=table(unlist(data_now_list[[f]]))
       
       if(length(data_now_list[[f]])==1){
         
@@ -1819,12 +1878,13 @@ function(user_id,session_id,storage_name,target_feature,target_values,features_q
 
 
 
-exploratory_fun_one_prop<-function(user_id="1",session_id="1",storage_name="",target_feature,target_values,features_query="",pillar="",level=""){
+exploratory_fun_one_prop<-function(user_id="1",session_id="1",storage_name="",target_feature,target_values,features_query="",pillar="",level="",data=NULL){
   
   
 
-  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data$items
+  if(is.null(data)) data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
+  data<-data$items
   
   target_values_split=unlist(strsplit(target_values,";;"))
 
@@ -1978,6 +2038,8 @@ exploratory_fun_one_prop<-function(user_id="1",session_id="1",storage_name="",ta
     
   }
   
+  for(i in 1:length(data_now_list_feature))data_now_list_feature[[i]]=unique(data_now_list_feature[[i]])
+  
   data_now_list_feature=data.frame("Item"=names(data_now_list_feature),"Freq"=unlist(lapply(data_now_list_feature,function(x)length(x))))
   data_now_list_feature=data_now_list_feature[order(data_now_list_feature$Freq,decreasing = T),]
 
@@ -2057,7 +2119,7 @@ trend_anal_fun<-function(user_id="1",session_id="1",date_field="upload_date",fea
   
   dates_now=lapply(data$items,function(x){
     temp_now=unlist(strsplit(x[[date_field]]," "))[[1]]
-    temp_now=as.Date(x = temp_now,format=date_format)
+    #temp_now=as.Date(x = temp_now,format=date_format)
     temp_now=substr(temp_now,start=digits_to_see_start,stop = digits_to_see_end)
     return(temp_now)
   })
@@ -2165,7 +2227,7 @@ trend_anal_fun_prop<-function(user_id="1",session_id="1",date_field="upload_date
     rbind,
     lapply(data$items,function(x){
     temp_now=unlist(strsplit(x[[date_field]]," "))[[1]]
-    temp_now=as.Date(x = temp_now,format=date_format)
+    #temp_now=as.Date(x = temp_now,format=date_format)
     temp_now=substr(temp_now,start=digits_to_see_start,stop = digits_to_see_end)
     return(data.frame("Id"=x$id,"Date"=temp_now))
   })
@@ -2341,24 +2403,12 @@ unanticipated_freq_multi_fun_double<-function(data_query_temp,data_all_temp,coun
     
     string_query=c()
     
-    for(i in 1:nrow(data_query_temp_now)){
+    
+    for(i in 1:nrow(data_query_temp_now))string_query=c(string_query,paste(data_query_temp_now[i,1],data_query_temp_now[i,2],";"))
       
-      if(data_query_temp_now[i,1]>data_query_temp_now[i,2]){
-        temp_now=data_query_temp_now[i,1]
-        data_query_temp_now[i,1]=data_query_temp_now[i,2]
-        data_query_temp_now[i,2]=temp_now
-      }
-      string_query=c(string_query,paste(data_query_temp_now[i,1],data_query_temp_now[i,2],";"))
-      
-    }
+    
     
     for(i in 1:nrow(data_all_temp_now)){
-      
-      if(data_all_temp_now[i,1]>data_all_temp_now[i,2]){
-        temp_now=data_all_temp_now[i,1]
-        data_all_temp_now[i,1]=data_all_temp_now[i,2]
-        data_all_temp_now[i,2]=temp_now
-      }
       
       string_temp=paste(data_all_temp_now[i,1],data_all_temp_now[i,2],";")
       match_temp=match(string_temp,string_query)
@@ -2396,7 +2446,7 @@ unanticipated_freq_multi_fun_double<-function(data_query_temp,data_all_temp,coun
 }
 
 
-frequencies_filtered_call_superfun<-function(user_id,session_id,target_feature="",target_values="",features_query,type_analysis,pillar_1="",pillar_2="",level_1="",level_2="",unanticipated_freq_arg,type_query,date_field){
+frequencies_filtered_call_superfun<-function(user_id="",session_id="",target_feature="",target_values="",features_query,type_analysis,pillar_1="",pillar_2="",level_1="",level_2="",unanticipated_freq_arg,type_query,date_field,data=NULL){
   
   #target_values='http://data.europa.eu/esco/isco/C1412'
   #target_feature='occupations'
@@ -2410,16 +2460,18 @@ frequencies_filtered_call_superfun<-function(user_id,session_id,target_feature="
   #target_feature="occupation_propagation"
   #target_values="http://data.europa.eu/esco/isco/C12"  
   
+  if(is.null(data)) data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
+  
+  #data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
   
-  data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   #target_values_split=unlist(strsplit(target_values,";;"))
   
   counter_all=data$count
   counter_now=0
   
   if(nchar(target_feature)>0){
-    pos_now=multi_query_fun(user_id = user_id,session_id = session_id,target_query = target_feature,values_query = target_values,type_query = type_query)
+    pos_now=multi_query_fun(user_id = user_id,session_id = session_id,target_query = target_feature,values_query = target_values,type_query = type_query,data = data)
   }else{
     pos_now=c(1:length(data$items))
   }
@@ -2484,11 +2536,26 @@ frequencies_filtered_call_superfun<-function(user_id,session_id,target_feature="
       #features_query="skills,occupations"
       #pillar_1="Skill,Knowledge";pillar_2="";level_1="1,2";level_2=""
       data_query_res=list()
-      data_query_res[[features_query]]=exploratory_fun_prop(user_id = user_id,session_id=session_id,features_query = features_query,pillar_1 = pillar_1,pillar_2 = pillar_2,level_1 = level_1,level_2 = level_2,data = data_temp)
+      
+      if(level_1==""&level_2==""){
+        data_query_res[[features_query]]=exploratory_fun(user_id = user_id,session_id=session_id,features_query = features_query,data = data_temp)
+        
+      }else{
+        data_query_res[[features_query]]=exploratory_fun_prop(user_id = user_id,session_id=session_id,features_query = features_query,pillar_1 = pillar_1,pillar_2 = pillar_2,level_1 = level_1,level_2 = level_2,data = data_temp)
+        
+      }
       
       if(unanticipated_freq_arg=="YES"){
         data_all_res=list()
-        data_all_res[[features_query]]=exploratory_fun_prop(user_id = user_id,session_id=session_id,features_query = features_query,pillar_1 = pillar_1,pillar_2 = pillar_2,level_1 = level_1,level_2 = level_2,data = data)
+        
+        if(level_1==""&level_2==""){
+          data_all_res[[features_query]]=exploratory_fun(user_id = user_id,session_id=session_id,features_query = features_query,data = data)
+          
+        }else{
+          data_all_res[[features_query]]=exploratory_fun_prop(user_id = user_id,session_id=session_id,features_query = features_query,pillar_1 = pillar_1,pillar_2 = pillar_2,level_1 = level_1,level_2 = level_2,data = data)
+          
+        }
+        
         unant_scores=unanticipated_freq_multi_fun_double(data_query_res,data_all_res,counter_now,counter_all)
         
       }else{
@@ -2553,7 +2620,7 @@ frequencies_filtered_call_superfun<-function(user_id,session_id,target_feature="
 #* @param user_id The id of the user
 #* @param session_id The id session of the user's current session
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
-#* @param target_feature Data features to inspect (e.g. skills, occupations, location,type). Multiple values are supported and can be separated with the coma (";;"). In cases where the target value is numeric, then you should add a prefix !! and some symbols indicating the direction of the filtering. It should be noted that each data record should have a single value of the selected feature (e.g. upload_date) and not multiple (e.g. skills). Available options: GE (Greater or EQUAL), GR (Greater), LE (Lower or Equal), LO (Lower), EQ (Equal).Example: '!!GE_Height' -> Investigate only the items that have height greater or equal to the given value (see target_values). Queries of this type can work for non-numeric variables too, e.g., '2024/02/15' > '2023/03/21'
+#* @param target_feature Data features to inspect (e.g. skills, occupations, location,type). Multiple values are supported and can be separated with the coma (";;"). In cases where the target value is numeric, then you should add a prefix !! and some symbols indicating the direction of the filtering. It should be noted that each data record should have a single value of the selected feature (e.g. upload_date) and not multiple (e.g. skills). Available options: GE (Greater or EQUAL), GR (Greater), LE (Lower or Equal), LO (Lower), EQ (Equal).Example: '!!GE_Height' -> Investigate only the items that have Height greater or equal to the given value (see target_values). Queries of this type can work for non-numeric variables too, e.g., '2024/02/15' > '2023/03/21'. In case the comparisons are made for dates, you should add the prefix !?, followed by the direction (similar to previously), and then the type (year->Y, month->M, year and month->B). Example: "!?LEY_upload_date" -> Investigate only the items that were posted (upload_date) earlier or in the provided year (see target_values).
 #* @param target_values Values of the target feature to inspect. Multiple values are supported and can be separated with the coma (";;"). These values match the target_feature arguments 1-1.
 #* @param features_query Which features to be inspected for finding unanticipated frequencies with respect to the target values. Multiple values are supported using the seperator ;;, depending on the analysis.
 #* @param type_analysis Whether to evaluate pairs or individual entities, or trends. Use 'PAIR' for pairs, and 'ONE' for individual entities, and 'TREND-year', 'TREND-year_month' or 'TREND-month' for trend analysis. 
@@ -2590,9 +2657,11 @@ function(user_id,session_id,storage_name,target_feature="",target_values="",feat
 
 
 
-skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weigthing'){
+skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting'){
+  
   #data_now=api_ex_now(url,body)
   
+  print("Data load (Cluster analysis)")
   data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
   
@@ -2600,6 +2669,9 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   umap_nn=as.numeric(umap_nn)
   umap_dim=as.numeric(umap_dim)
   no_clust_now=as.numeric(no_clust_now)
+  
+  print("Load skills and skill matrix (Cluster analysis)")
+  
   
   if(nchar(pillar)==0){
     
@@ -2628,9 +2700,14 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   no_documents_now=nrow(data_now)
   gc()
   
+  print("Skill co-occurrence matrix (Cluster analysis)")
+  
   #data_now=co_occurence_mat(data_now[,c(1:100)],data_now[,c(1:100)])
   data_now=co_occurence_mat(data_now,data_now)
   gc()
+  
+  
+  print("Skill co-occurrence weights (Cluster analysis)")
   
   
   if (!(type_now%in%c("correspondence"))&vectors_type=="weighting"){
@@ -2639,6 +2716,8 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     gc()
   } 
   
+  
+  print("Clustering algorithm and word vectors (Cluster analysis)")
   
   
   if(type_now=='kmeans'){
@@ -2681,9 +2760,11 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   
   gc()
   
-  #clust_output[[1]]=plotly_json(clust_output[[1]])
-  clust_output[[1]]=NULL
+  print("Add labels (Cluster analysis)")
+  
+  
   clust_output[[1]]$Pref_Label=unlist(data_all_skills$label[match(clust_output[[1]]$Label,data_all_skills$id)])
+  
   return(clust_output)
   
 }
@@ -2700,7 +2781,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
 #* @param umap_dim Parameter of the umap algorithm denotning the no dimensions of the extracted vectors (available only when type_now is equal to kmeans or gmm)
 #* @param pillar Pillars to analyze, you must leave this empty if you want to analyze the default skills. It can contain multiple pillars separated by ';;'. Available options: Skill, Knowledge, Traversal, Language.
 #* @param level Taxonomy Levels to investigate. Only available when pillar is not empty. One level per pillar should be provided. The levels should be separated by ';;' (e.g. 0;;3;;2).
-#* @param vectors_type Ways to project skill vectors. Currently, you can use weigthing (See weight_now) or GloVe. GloVe should be only used when type_now is kmeans or gmm.
+#* @param vectors_type Ways to project skill vectors. Currently, you can use weighting (See weight_now) or GloVe. GloVe should be only used when type_now is kmeans or gmm.
 #* @get /skillcluster
 function(type_now="kmeans",user_id,session_id,storage_name,weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting') {
   
@@ -2709,6 +2790,7 @@ function(type_now="kmeans",user_id,session_id,storage_name,weight_now='ii_weight
   future({
     
     data_now=skill_cluster_fun(type_now=type_now,user_id=user_id,session_id=session_id,weight_now=weight_now,no_clust_now=no_clust_now,threshold=threshold,umap_nn=umap_nn,umap_dim=umap_dim,pillar=pillar,level=level,vectors_type=vectors_type)  # Simulate the API call
+    print("Save Data (Cluster analysis)")
     save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'skill_clust',variable_value = data_now,subvariable_name = storage_name)
     return(data_now)
     
