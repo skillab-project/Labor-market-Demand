@@ -1,7 +1,7 @@
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-#path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
-path_user_files_all="~/user_sessions/"
+path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
+#path_user_files_all="~/user_sessions/"
 
 
 
@@ -2657,9 +2657,11 @@ function(user_id,session_id,storage_name,target_feature="",target_values="",feat
 
 
 
-skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weigthing'){
+skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting'){
+  
   #data_now=api_ex_now(url,body)
   
+  print("Data load (Cluster analysis)")
   data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
   
@@ -2667,6 +2669,9 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   umap_nn=as.numeric(umap_nn)
   umap_dim=as.numeric(umap_dim)
   no_clust_now=as.numeric(no_clust_now)
+  
+  print("Load skills and skill matrix (Cluster analysis)")
+  
   
   if(nchar(pillar)==0){
     
@@ -2695,9 +2700,14 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   no_documents_now=nrow(data_now)
   gc()
   
+  print("Skill co-occurrence matrix (Cluster analysis)")
+  
   #data_now=co_occurence_mat(data_now[,c(1:100)],data_now[,c(1:100)])
   data_now=co_occurence_mat(data_now,data_now)
   gc()
+  
+  
+  print("Skill co-occurrence weights (Cluster analysis)")
   
   
   if (!(type_now%in%c("correspondence"))&vectors_type=="weighting"){
@@ -2706,6 +2716,8 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
     gc()
   } 
   
+  
+  print("Clustering algorithm and word vectors (Cluster analysis)")
   
   
   if(type_now=='kmeans'){
@@ -2748,6 +2760,9 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   
   gc()
   
+  print("Add labels (Cluster analysis)")
+  
+  
   clust_output[[1]]$Pref_Label=unlist(data_all_skills$label[match(clust_output[[1]]$Label,data_all_skills$id)])
   
   return(clust_output)
@@ -2766,7 +2781,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
 #* @param umap_dim Parameter of the umap algorithm denotning the no dimensions of the extracted vectors (available only when type_now is equal to kmeans or gmm)
 #* @param pillar Pillars to analyze, you must leave this empty if you want to analyze the default skills. It can contain multiple pillars separated by ';;'. Available options: Skill, Knowledge, Traversal, Language.
 #* @param level Taxonomy Levels to investigate. Only available when pillar is not empty. One level per pillar should be provided. The levels should be separated by ';;' (e.g. 0;;3;;2).
-#* @param vectors_type Ways to project skill vectors. Currently, you can use weigthing (See weight_now) or GloVe. GloVe should be only used when type_now is kmeans or gmm.
+#* @param vectors_type Ways to project skill vectors. Currently, you can use weighting (See weight_now) or GloVe. GloVe should be only used when type_now is kmeans or gmm.
 #* @get /skillcluster
 function(type_now="kmeans",user_id,session_id,storage_name,weight_now='ii_weight',no_clust_now=10,threshold=0.1,umap_nn=5,umap_dim=2,pillar="",level="",vectors_type='weighting') {
   
@@ -2775,6 +2790,7 @@ function(type_now="kmeans",user_id,session_id,storage_name,weight_now='ii_weight
   future({
     
     data_now=skill_cluster_fun(type_now=type_now,user_id=user_id,session_id=session_id,weight_now=weight_now,no_clust_now=no_clust_now,threshold=threshold,umap_nn=umap_nn,umap_dim=umap_dim,pillar=pillar,level=level,vectors_type=vectors_type)  # Simulate the API call
+    print("Save Data (Cluster analysis)")
     save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'skill_clust',variable_value = data_now,subvariable_name = storage_name)
     return(data_now)
     
