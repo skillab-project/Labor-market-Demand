@@ -9,6 +9,12 @@ services:
       - API_BASE_URL=https://skillab-tracker.csd.auth.gr/api
     ports:
       - "8873:8872"
+    networks:
+      - shared-net
     labels:
       io.portainer.accesscontrol.teams: skillab-all
     restart: unless-stopped
+
+networks:
+  shared-net:
+    external: true

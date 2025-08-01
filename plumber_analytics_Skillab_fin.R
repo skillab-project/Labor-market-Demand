@@ -2661,7 +2661,6 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   
   #data_now=api_ex_now(url,body)
   
-  print("Data load (Cluster analysis)")
   data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
   
   
@@ -2670,8 +2669,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   umap_dim=as.numeric(umap_dim)
   no_clust_now=as.numeric(no_clust_now)
   
-  print("Load skills and skill matrix (Cluster analysis)")
-  
+
   
   if(nchar(pillar)==0){
     
@@ -2700,15 +2698,13 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   no_documents_now=nrow(data_now)
   gc()
   
-  print("Skill co-occurrence matrix (Cluster analysis)")
-  
+
   #data_now=co_occurence_mat(data_now[,c(1:100)],data_now[,c(1:100)])
   data_now=co_occurence_mat(data_now,data_now)
   gc()
   
   
-  print("Skill co-occurrence weights (Cluster analysis)")
-  
+
   
   if (!(type_now%in%c("correspondence"))&vectors_type=="weighting"){
     diag_values_now=diag(data_now)
@@ -2717,8 +2713,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   } 
   
   
-  print("Clustering algorithm and word vectors (Cluster analysis)")
-  
+
   
   if(type_now=='kmeans'){
     
@@ -2760,8 +2755,7 @@ skill_cluster_fun<-function(type_now="kmeans",user_id="1",session_id="1",weight_
   
   gc()
   
-  print("Add labels (Cluster analysis)")
-  
+
   
   clust_output[[1]]$Pref_Label=unlist(data_all_skills$label[match(clust_output[[1]]$Label,data_all_skills$id)])
   
@@ -2790,7 +2784,6 @@ function(type_now="kmeans",user_id,session_id,storage_name,weight_now='ii_weight
   future({
     
     data_now=skill_cluster_fun(type_now=type_now,user_id=user_id,session_id=session_id,weight_now=weight_now,no_clust_now=no_clust_now,threshold=threshold,umap_nn=umap_nn,umap_dim=umap_dim,pillar=pillar,level=level,vectors_type=vectors_type)  # Simulate the API call
-    print("Save Data (Cluster analysis)")
     save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'skill_clust',variable_value = data_now,subvariable_name = storage_name)
     return(data_now)
     
