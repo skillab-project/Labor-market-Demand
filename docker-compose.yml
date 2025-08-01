@@ -9,11 +9,18 @@ services:
       - API_BASE_URL=https://skillab-tracker.csd.auth.gr/api
     ports:
       - "8873:8872"
+    volumes:
+       - labor_market_demand_postgresql_data:/root/user_sessions
     networks:
       - shared-net
     labels:
       io.portainer.accesscontrol.teams: skillab-all
     restart: unless-stopped
+
+volumes:
+  labor_market_demand_postgresql_data:
+    labels:
+      io.portainer.accesscontrol.teams: skillab-all
 
 networks:
   shared-net:
