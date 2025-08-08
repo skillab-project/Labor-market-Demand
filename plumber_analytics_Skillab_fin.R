@@ -1,7 +1,7 @@
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-#path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
-path_user_files_all="~/user_sessions/"
+path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
+#path_user_files_all="~/user_sessions/"
 
 
 
@@ -165,10 +165,12 @@ api_ex_now<-function(url,body=list(),per_page=100,limit_data_no=""){
   
   if(items$count>0 & nchar(limit_data_no)>0){
     limit_data_no=as.numeric(limit_data_no)
-    items$count=limit_data_no
+    if(items$count>limit_data_no){
+      items$count=limit_data_no
+    }
   }
   
-  if(items$count>0&items$count>=per_page){
+  if(items$count>per_page){
     
     
     pages_to_collect=items$count%/%per_page
@@ -199,7 +201,7 @@ api_ex_now<-function(url,body=list(),per_page=100,limit_data_no=""){
     }
     return(items)
     
-  }else if (items$count<=per_page){
+  }else if (items$count>0){
     return(items)
   }
   else{
