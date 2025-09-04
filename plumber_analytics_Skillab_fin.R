@@ -1,7 +1,7 @@
 
 #path_user_files_all="C:/Users/kostas charm/Documents/Skillab/analytics_microservice/"
-path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
-#path_user_files_all="~/user_sessions/"
+#path_user_files_all="C:/Users/zapfl/OneDrive/Documents/phd/Skillab/analytics_microservice/"
+path_user_files_all="~/user_sessions/"
 
 
 
@@ -30,6 +30,8 @@ library(factoextra)
 library(ggforce)
 library(binda)
 library(FactoMineR)
+library(data.table)
+
 
 
 
@@ -1435,8 +1437,7 @@ analytics_fun<-function(user_id="1",session_id="1",features_query="",data=NULL){
         
       }
       
-    
-    
+
     
   }
   
@@ -1539,89 +1540,119 @@ function(user_id,session_id,storage_name,what,pillar="",level=""){
 }
 
 
-exploratory_fun<-function(user_id="1",session_id="1",features_query="",data=NULL){
+exploratory_fun <- function(user_id = "1",session_id = "1",features_query = "",data = NULL,version_use = "version_1") {
   
-  if(is.null(data))data<-load_user_session_file(user_id = user_id,session_id = session_id)$data
+  if (is.null(data))data <- load_user_session_file(user_id = user_id, session_id = session_id)$data
   
   
-  #data_now=api_ex_now(url,body)
-  features_query_split=unlist(strsplit(features_query,";;"))
+  features_query_split <- unlist(strsplit(features_query, ";;"))
   
-  if(features_query_split[1]==features_query_split[2]){
-
-    data_now <- do.call(
-      rbind,
-      lapply(data$items, function(x) {
-        x_list=unlist(x[[features_query_split[1]]])  
-        x_list=unique(x_list)
-        
-        if(length(x_list)>1&!is.null(x_list)){
+  if (version_use == "version_1") {
+    
+    if (features_query_split[1] == features_query_split[2]) {
+      data_now <- do.call(
+        rbind,
+        lapply(data$items, function(x) {
+          x_list <- unique(unlist(x[[features_query_split[1]]]))
           
-          return_list=list(c1=c(),c2=c())
-          
-
-          x_list=sort(x_list)
-          
-          for(i in 1:(length(x_list)-1)){
-            for(j in (i+1):length(x_list)){
-              
-              return_list$c1=c(return_list$c1,x_list[i])
-              return_list$c2=c(return_list$c2,x_list[j])
-              
+          if (length(x_list) > 1 && !is.null(x_list)) {
+            return_list <- list(Var1 = c(), Var2 = c())
+            x_list <- sort(x_list)
+            
+            for (i in 1:(length(x_list) - 1)) {
+              for (j in (i + 1):length(x_list)) {
+                return_list$Var1 <- c(return_list$Var1, x_list[i])
+                return_list$Var2 <- c(return_list$Var2, x_list[j])
+              }
             }
+            return(as.data.frame(return_list, stringsAsFactors = FALSE))
           }
-          return(as.data.frame(return_list))
-          
-        }
-        
-        
-      })
-    ) 
+        })
+      )
       
-  }else{
-    data_now <- do.call(
-      rbind,
-      lapply(data$items, function(x) {
-        x1_list=unlist(x[[features_query_split[1]]])  
-        x2_list=unlist(x[[features_query_split[2]]])
-        
-        if(length(x1_list)>0&!is.null(x1_list)&length(x2_list)>0&!is.null(x2_list)){
-          x1_list=unique(x1_list)
-          x2_list=unique(x2_list)
+    } else {
+      data_now <- do.call(
+        rbind,
+        lapply(data$items, function(x) {
+          x1_list <- unique(unlist(x[[features_query_split[1]]]))
+          x2_list <- unique(unlist(x[[features_query_split[2]]]))
           
-          return(expand.grid(x1_list,x2_list))
-          
-        }
-        
-        
-      })
-    )
-    
-    
-  }
-
-  data_now=table(data_now) ; data_now=as.data.frame(data_now)
-  
-  
-
-  data_now=data_now[data_now$Freq>0,]
-  data_now=data_now[order(data_now$Freq,decreasing = T),]
-  
-  
-  for (i in 1:length(features_query_split)){
-    if(features_query_split[i]=="occupations"){
-      data_now[[paste0("item_",i)]]=unlist(data_all_occupations$label[match(data_now[,i],data_all_occupations$id)])
-      
-    }else if(features_query_split[i]=="skills"){
-      data_now[[paste0("item_",i)]]=unlist(data_all_skills$label[match(data_now[,i],data_all_skills$id)])
-      
+          if (length(x1_list) > 0 && !is.null(x1_list) &&
+              length(x2_list) > 0 && !is.null(x2_list)) {
+            return(expand.grid(Var1 = x1_list, Var2 = x2_list, stringsAsFactors = FALSE))
+          }
+        })
+      )
     }
     
+    data_now <- aggregate(
+      list(Freq = rep(1, nrow(data_now))),
+      by = list(
+        Var1 = as.character(data_now$Var1),
+        Var2 = as.character(data_now$Var2)
+      ),
+      FUN = sum
+    )
+    data_now <- data_now[order(data_now$Freq, decreasing = TRUE), ]
+    
+    
+    for (i in 1:length(features_query_split)) {
+      if (features_query_split[i] == "occupations") {
+        data_now[[paste0("item_", i)]] <- as.character(data_all_occupations$label[
+          match(data_now[[paste0("Var", i)]], data_all_occupations$id)
+        ])
+      } else if (features_query_split[i] == "skills") {
+        data_now[[paste0("item_", i)]] <- as.character(data_all_skills$label[
+          match(data_now[[paste0("Var", i)]], data_all_skills$id)
+        ])
+      }
+    }
+    
+    data_now <- droplevels(data_now)
+    return(data_now)
+    
+  } else if (version_use == "version_2") {
+    
+    if (features_query_split[1] == features_query_split[2]) {
+      pairs <- rbindlist(lapply(data$items, function(x) {
+        x_list <- unique(unlist(x[[features_query_split[1]]]))
+        if (length(x_list) > 1) {
+          out <- as.data.table(t(combn(sort(x_list), 2)))
+          setnames(out, c("Var1", "Var2"))
+          return(out)
+        }
+        NULL
+      }))
+      
+    } else {
+      pairs <- rbindlist(lapply(data$items, function(x) {
+        x1 <- unique(unlist(x[[features_query_split[1]]]))
+        x2 <- unique(unlist(x[[features_query_split[2]]]))
+        if (length(x1) > 0 && length(x2) > 0) {
+          CJ(Var1 = x1, Var2 = x2)
+        } else NULL
+      }))
+    }
+    
+    data_now <- pairs[, .(Freq = .N), by = .(Var1, Var2)][order(-Freq)]
+    
+    for (i in seq_along(features_query_split)) {
+      if (features_query_split[i] == "occupations") {
+        data_now[[paste0("item_", i)]] <- as.character(data_all_occupations$label[
+          match(data_now[[paste0("Var", i)]], data_all_occupations$id)
+        ])
+      } else if (features_query_split[i] == "skills") {
+        data_now[[paste0("item_", i)]] <- as.character(data_all_skills$label[
+          match(data_now[[paste0("Var", i)]], data_all_skills$id)
+        ])
+      }
+    }
+    
+    data_now <- as.data.frame(data_now, stringsAsFactors = FALSE)
+    data_now <- droplevels(data_now)
+    
+    return(data_now)
   }
-  
-  
-  return(data_now)
-  
 }
 
 #* Exploratory Analytics
@@ -1629,14 +1660,15 @@ exploratory_fun<-function(user_id="1",session_id="1",features_query="",data=NULL
 #* @param session_id The id session of the user's current session
 #* @param storage_name Store the outcome of the analysis with a unique code name. This utility enables the existence of multiple outputs for each type of analysis. Should not be empty!
 #* @param features_query Which features_query to be extracted from the imported data. They should be exactly two features separated using the character ';;' (e.g. skills;;occupations;;location,type)
+#* @param version_use Which version of methods to use. Current options: version_1, version_2. Please use version_1 as version_2 is still tested
 #* @get /analytics_exploratory
-function(user_id,session_id,storage_name,features_query){
+function(user_id,session_id,storage_name,features_query,version_use="version_1"){
   
   print("Exploratory statistics")
   
   future({
     
-    data_now=exploratory_fun(user_id = user_id, session_id = session_id,features_query = features_query)  # Simulate the API call
+    data_now=exploratory_fun(user_id = user_id, session_id = session_id,features_query = features_query,version_use=version_use)  # Simulate the API call
     save_update_user_session_file(user_id = user_id,session_id = session_id,variable_name = 'explor_stats',variable_value = data_now,subvariable_name = storage_name)
     return(data_now)
   }) %...>% {  # On success
@@ -2375,6 +2407,9 @@ unanticipated_freq_multi_fun_one<-function(data_query_temp,data_all_temp,counter
         unant_scores[[f]]$Label=data_all_occupations$Label[match(unant_scores[[f]]$Item,data_all_occupations$id)]
         
       }
+      
+      unant_scores[[f]]=unant_scores[[f]][order(unant_scores[[f]]$Score,decreasing = T),]
+      
     }
   }
   
@@ -2433,7 +2468,9 @@ unanticipated_freq_multi_fun_double<-function(data_query_temp,data_all_temp,coun
       
     }
     
+    
     unant_scores_list[[f]]=as.data.frame(unant_scores$table)
+    unant_scores_list[[f]]=unant_scores_list[[f]][order(unant_scores_list[[f]]$Score,decreasing = T),]
     
   }
   

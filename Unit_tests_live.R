@@ -906,7 +906,7 @@ test_that("exploratory_fun works",{
   #1 country - occupations
   {
     mat_real=data.frame(
-      Var1=factor(c(
+      Var1=c(
         "http://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30",
         "http://data.europa.eu/esco/occupation/68d973df-bf10-4bf7-9a1b-fbd9f604b9db",
         "http://data.europa.eu/esco/occupation/8021f3a2-e3de-43c0-b366-075da74dc5b7",
@@ -916,15 +916,8 @@ test_that("exploratory_fun works",{
         "http://data.europa.eu/esco/occupation/1c5a45b9-440e-4726-b565-16a952abd341",
         "http://data.europa.eu/esco/isco/C1212",
         "http://data.europa.eu/esco/occupation/a6e8a6bf-9209-4d19-a131-a8b6431e0f75"
-        ),levels = c(
-          "http://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30",
-          "http://data.europa.eu/esco/occupation/1c5a45b9-440e-4726-b565-16a952abd341",
-          "http://data.europa.eu/esco/isco/C1212",
-          "http://data.europa.eu/esco/occupation/68d973df-bf10-4bf7-9a1b-fbd9f604b9db",
-          "http://data.europa.eu/esco/occupation/8021f3a2-e3de-43c0-b366-075da74dc5b7",
-          "http://data.europa.eu/esco/occupation/a6e8a6bf-9209-4d19-a131-a8b6431e0f75"
-        )),
-      Var2=factor(c(
+        ),
+      Var2=c(
         "Greece",
         "Greece",
         "Greece",
@@ -934,7 +927,7 @@ test_that("exploratory_fun works",{
         "Germany",
         "Germany",
         "Germany"
-      ),levels = c("Greece","Germany")),
+      ),
       Freq=c(3,2,2,2,1,1,1,1,1),
       item_1=c(
         "data scientist",
@@ -951,12 +944,18 @@ test_that("exploratory_fun works",{
     )
     
     
-    mat_fun=exploratory_fun(data = data,features_query = "occupations;;country")
+    mat_fun_1=exploratory_fun(data = data,features_query = "occupations;;country",version_use = "version_1")
+    mat_fun_2=exploratory_fun(data = data,features_query = "occupations;;country",version_use = "version_2")
     
-    rownames(mat_fun)=  rownames(mat_real)= NULL
+    mat_fun_1=mat_fun_1[order(mat_fun_1$Freq,mat_fun_1$Var1,mat_fun_1$Var2,decreasing = T),]
+    mat_fun_2=mat_fun_2[order(mat_fun_2$Freq,mat_fun_2$Var1,mat_fun_2$Var2,decreasing = T),]
+    mat_real=mat_real[order(mat_real$Freq,mat_real$Var1,mat_real$Var2,decreasing = T),]
+    
+    rownames(mat_fun_1)=  rownames(mat_fun_2)= rownames(mat_real)= NULL
     
     
-    expect_equal(mat_fun,expected = mat_real)
+    expect_equal(mat_fun_1,expected = mat_real)
+    expect_equal(mat_fun_2,expected = mat_real)
     
   }
   
@@ -964,7 +963,7 @@ test_that("exploratory_fun works",{
   #2 occupation - occupation
   {
     mat_real=data.frame(
-      c1=c(
+      Var1=c(
         "http://data.europa.eu/esco/isco/C1212",
         "http://data.europa.eu/esco/isco/C1212",
         "http://data.europa.eu/esco/occupation/1c5a45b9-440e-4726-b565-16a952abd341",
@@ -973,7 +972,7 @@ test_that("exploratory_fun works",{
         "http://data.europa.eu/esco/occupation/68d973df-bf10-4bf7-9a1b-fbd9f604b9db",
         "http://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30"
       ),
-      c2=c(
+      Var2=c(
         "http://data.europa.eu/esco/occupation/1c5a45b9-440e-4726-b565-16a952abd341",
         "http://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30",
         "http://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30",
@@ -1005,15 +1004,19 @@ test_that("exploratory_fun works",{
     )
     
     
-    mat_fun=exploratory_fun(data = data,features_query = "occupations;;occupations")
+    mat_fun_1=exploratory_fun(data = data,features_query = "occupations;;occupations",version_use = "version_1")
+    mat_fun_2=exploratory_fun(data = data,features_query = "occupations;;occupations",version_use = "version_2")
     
-    mat_real$c1=factor(mat_real$c1,levels=levels(mat_fun$c1))
-    mat_real$c2=factor(mat_real$c2,levels=levels(mat_fun$c2))
+    mat_fun_1=mat_fun_1[order(mat_fun_1$Freq,mat_fun_1$Var1,mat_fun_1$Var2,decreasing = T),]
+    mat_fun_2=mat_fun_2[order(mat_fun_2$Freq,mat_fun_2$Var1,mat_fun_2$Var2,decreasing = T),]
+    mat_real=mat_real[order(mat_real$Freq,mat_real$Var1,mat_real$Var2,decreasing = T),]
+   
+   
+    rownames(mat_fun_1)= rownames(mat_fun_2)= rownames(mat_real)= NULL
     
-    rownames(mat_fun)=  rownames(mat_real)= NULL
     
-    
-    expect_equal(mat_fun,expected = mat_real)
+    expect_equal(mat_fun_1,expected = mat_real)
+    expect_equal(mat_fun_2,expected = mat_real)
     
   }
   
@@ -2031,6 +2034,10 @@ test_that("unanticipated_freq_multi_fun_one works",{
     
     mat_fun=unanticipated_freq_multi_fun_one(data_query_res,data_all_res,counter_now,counter_all)
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
+    
     
     expect_equal(mat_fun,expected = mat_real)
   }
@@ -2075,6 +2082,9 @@ test_that("unanticipated_freq_multi_fun_one works",{
     
     mat_fun=unanticipated_freq_multi_fun_one(data_query_res,data_all_res,counter_now,counter_all)
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001)
   }
@@ -2128,6 +2138,9 @@ test_that("unanticipated_freq_multi_fun_one works",{
     
     mat_fun=unanticipated_freq_multi_fun_one(data_query_res,data_all_res,counter_now,counter_all)
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001)
     
@@ -2201,7 +2214,7 @@ test_that("unanticipated_freq_multi_fun_double works",{
         (1/3)/((0+.Machine$double.eps)/2),
         (1/3)/((0+.Machine$double.eps)/2),
  
-        ((0+.Machine$double.eps)/3)/(1/2)
+        (0/3)/(1/2)
 
       )
       ),
@@ -2227,6 +2240,9 @@ test_that("unanticipated_freq_multi_fun_double works",{
     
     mat_fun=unanticipated_freq_multi_fun_double(data_query_res,data_all_res,counter_now,counter_all)
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001)
     
@@ -2283,7 +2299,7 @@ test_that("unanticipated_freq_multi_fun_double works",{
         (1/3)/(1/2),
         (1/3)/(1/2),
         (1/3)/(1/2),
-        ((0+.Machine$double.eps)/3)/(1/2)
+        (0/3)/(1/2)
         
       )
       ),
@@ -2309,6 +2325,9 @@ test_that("unanticipated_freq_multi_fun_double works",{
     
     mat_fun=unanticipated_freq_multi_fun_double(data_query_res,data_all_res,counter_now,counter_all)
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001)
     
@@ -2388,6 +2407,10 @@ test_that("unanticipated_freq_multi_fun_double works",{
     
     
     mat_fun=unanticipated_freq_multi_fun_double(data_query_res,data_all_res,counter_now,counter_all)
+    
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
   
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001)
@@ -2490,6 +2513,10 @@ test_that("frequencies_filtered_call_superfun works",{
       data = data,target_feature = "country;;occupations",target_values = "Germany;;http://data.europa.eu/esco/isco/C1212",
       features_query = "occupations",type_analysis = "ONE",type_query = "OR",unanticipated_freq_arg = "YES")
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
+    
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001) 
     
@@ -2549,9 +2576,11 @@ test_that("frequencies_filtered_call_superfun works",{
     
     mat_fun<-frequencies_filtered_call_superfun(
       data = data,target_feature = "skills",target_values ="http://data.europa.eu/esco/skill/2b92a5b2-6758-4ee3-9fb4-b6387a55cc8f",#perform data analysis
-
-
       features_query = "occupations;;country",level_1 = "3",type_analysis = "PAIR",type_query = "OR",unanticipated_freq_arg = "YES")
+    
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001) 
@@ -2627,9 +2656,11 @@ test_that("frequencies_filtered_call_superfun works",{
     
     mat_fun<-frequencies_filtered_call_superfun(
       data = data,target_feature = "skills",target_values ="http://data.europa.eu/esco/skill/2b92a5b2-6758-4ee3-9fb4-b6387a55cc8f",#perform data analysis
-      
-      
       features_query = "occupations;;country",type_analysis = "PAIR",type_query = "OR",unanticipated_freq_arg = "YES")
+    
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
     
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001) 
@@ -2685,10 +2716,15 @@ test_that("frequencies_filtered_call_superfun works",{
       features_query = "country",type_analysis = "TREND-year",date_field = "upload_date",
       type_query = "OR",unanticipated_freq_arg = "YES")
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
+    
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001) 
     
   }
+  
   
   #Occupations prop trend - skill filter
   {
@@ -2767,6 +2803,10 @@ test_that("frequencies_filtered_call_superfun works",{
       features_query = "occupations",level_1 = "3",type_analysis = "TREND-year",date_field = "upload_date",
       type_query = "OR",unanticipated_freq_arg = "YES")
     
+    mat_fun[[1]]=mat_fun[[1]][order(mat_fun[[1]]$Score,mat_fun[[1]]$Item_1,mat_fun[[1]]$Item_2,decreasing = T),]
+    mat_real[[1]]=mat_real[[1]][order(mat_real[[1]]$Score,mat_real[[1]]$Item_1,mat_real[[1]]$Item_2,decreasing = T),]
+    rownames(mat_real[[1]])=rownames(mat_fun[[1]])=NULL
+    
     
     expect_equal(mat_fun,expected = mat_real,tolerance = 0.00001) 
     
@@ -2774,6 +2814,8 @@ test_that("frequencies_filtered_call_superfun works",{
   }
   
 })
+
+
 
 
 
